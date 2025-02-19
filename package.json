@@ -1,0 +1,25 @@
+{
+  "name": "my-fullstack-ecommerce",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && npm install",
+    "install": "npm run install:frontend && npm run install:backend",
+    "build:frontend": "cd frontend && npm run build",
+    "start:backend": "cd backend && node app.js",
+    "build": "npm run build:frontend",
+    "start": "npm run build && npm run start:backend"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "vite": "^6.0.7"
+  },
+  "dependencies": {
+    "sweetalert2": "^11.15.10"
+  }
+}
