@@ -15,7 +15,10 @@ const path = require("path");
 
 
 
-app.use(cors());
+app.use(cors({
+  origin:['http://localhost:5173','https://kings1-web-e-commerce.onrender.com/api/v1/'],
+  credentials:true
+}));
 app.options("*", cors());
 
 //middleware
