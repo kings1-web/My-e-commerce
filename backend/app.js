@@ -9,16 +9,12 @@ dotenv.config()
 require("dotenv/config");
 const authJwt = require("./helpers/jwt");
 const errorHandler = require("./helpers/error-handler");
-//const authenticateUser = require("./helpers/authenticateUser");
 const path = require("path");
 
 
 
 
-app.use(cors({
-  origin:['http://localhost:5173','https://kings1-web-e-commerce.onrender.com/api/v1/'],
-  credentials:true
-}));
+app.use(cors());
 app.options("*", cors());
 
 //middleware
@@ -27,7 +23,6 @@ app.use(morgan("tiny"));
 app.use(authJwt());
 app.use('/public/uploads',express.static(__dirname + '/public/uploads'));
 app.use(errorHandler);
-//app.use(authenticateUser);
 app.use(express.static(path.join(__dirname, "dist")));
 
 app.use((req, res, next)=>{

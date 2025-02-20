@@ -6,6 +6,11 @@ import vue from "@vitejs/plugin-vue";
 
 // https://vite.dev/config/
 export default defineConfig({
+  server:{
+    proxy:{
+      "baseURL":"https://kings1-web-e-commerce.onrender.com/api/v1/"
+    }
+  },
   base:'/',
   plugins: [
     vue(),
