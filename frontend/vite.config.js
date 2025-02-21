@@ -8,7 +8,7 @@ import vue from "@vitejs/plugin-vue";
 export default defineConfig({
   server:{
     proxy:{
-      "baseURL":"https://kings1-web-e-commerce.onrender.com/api/v1/"
+      "baseURL":"https://kings-ecommerce.onrender.com/api/v1/"
     }
   },
   base:'/',
