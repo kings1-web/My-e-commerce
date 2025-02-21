@@ -20,10 +20,10 @@ app.options("*", cors());
 //middleware
 app.use(bodyParser.json());
 app.use(morgan("tiny"));
-app.use(authJwt());
 app.use('/public/uploads',express.static(__dirname + '/public/uploads'));
-app.use(errorHandler);
 app.use(express.static(path.join(__dirname, "dist")));
+app.use(errorHandler);
+app.use(authJwt());
 
 app.use((req, res, next)=>{
   if(req.path=== '/favicon.ico'){
