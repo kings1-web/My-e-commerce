@@ -1,7 +1,9 @@
 <template>
   <div class="card img-fluid">
     <div class="embed-responsive embed-responsive-10px">
+      <router-link :to="{ name: 'ShowDetails', params: { id: product.id } }">
       <img :src="product.image" class="card-img-top" alt="..." />
+      </router-link>
     </div>
     <div class="card-body p-1 my-2">
       <router-link :to="{ name: 'ShowDetails', params: { id: product.id } }">

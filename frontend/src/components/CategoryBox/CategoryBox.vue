@@ -1,11 +1,13 @@
 <template>
   <div class="card img-fluid" style="m">
     <div class="embed-responsive embed-responsive-10px">
+      <RouterLink :to="{ name: 'ListProduct', params: { id: category.id } }">
       <img
         :src="category.image"
         class="card-img-top"
         alt="..."
       />
+    </RouterLink>
     </div>
     <div class="card-body">
       <RouterLink :to="{ name: 'ListProduct', params: { id: category.id } }">

@@ -8,7 +8,7 @@
               start shopping >>
             </a>
           </h3>
-          <p class="lead mb-0 bg-dark p-1 rounded">KINGS1-WEB ECommerce-Affiliate</p>
+          <p class="lead mb-0 bg-dark p-1 rounded">KINGS1-WEB E-Commerce-Affiliate</p>
         </header>
         <label></label>
         <select class="form-select-lg" v-on:change="category" required>
