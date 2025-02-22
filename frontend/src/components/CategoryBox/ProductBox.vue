@@ -5,11 +5,11 @@
       <img :src="product.image" class="card-img-top" alt="..." />
       </router-link>
     </div>
-    <div class="card-body p-1 my-2">
+    <div class="card-body">
       <router-link :to="{ name: 'ShowDetails', params: { id: product.id } }">
         <h5 class="card-title">{{ product.name }}</h5>
       </router-link>
-      <p class="card-text">{{ product.discription.substring(0, 65) }}...</p>
+      <p class="card-text text-wrap">{{ product.discription.substring(0, 25) }}...</p>
       <RouterLink
         :to="{ name: 'EditProduct', params: { id: product.id } }"
         v-show="$route.name == 'AdminProduct'"
