@@ -16,7 +16,7 @@
                     </div>
                     <div class="form-group">
                         <label>discription</label>
-                        <input type="text" class="form-control" v-model="category.icon" require/>
+                        <input type="text" row="3" class="form-control" v-model="category.icon" require/>
                     </div>
                     <div class="form-group">
                         <label>imageFile</label><br/>

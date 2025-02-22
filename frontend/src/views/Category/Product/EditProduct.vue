@@ -33,6 +33,7 @@
               <label>discription</label>
               <input
                 type="text"
+                row="3"
                 class="form-control"
                 v-model="product.discription"
                 require
