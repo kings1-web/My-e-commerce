@@ -84,7 +84,7 @@ export default {
     },
   mounted() {
     this.categorySize = Math.min(8, this.categories.length);
-    this.productSize = Math.min(8, this.products.length);
+    this.productSize = Math.min(20, this.products.length);
   },
 };
 </script>

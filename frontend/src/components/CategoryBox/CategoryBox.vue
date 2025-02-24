@@ -13,7 +13,7 @@
       <RouterLink :to="{ name: 'ListProduct', params: { id: category.id } }">
         <h5 class="card-title">{{ category.name }}</h5>
       </RouterLink>
-      <p class="card-text">{{ category.icon.substring(0, 25) }}...</p>
+      <p class="card-text">{{ category.icon.substring(0, 25) }}</p>
       <RouterLink
         :to="{ name: 'EditCategory', params: { id: category.id } }"
         v-show="$route.name == 'Category'"
