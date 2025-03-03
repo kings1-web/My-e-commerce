@@ -10,7 +10,6 @@
           </h3>
           <p class="lead mb-0 bg-dark p-1 rounded">KINGS1-WEB E-Commerce-Affiliate</p>
         </header>
-        <label></label>
         <select class="form-select-lg" v-on:change="category" required>
           <option selected>Shop by Category</option>
                         <option v-for="category of categories"
@@ -19,7 +18,7 @@
                     </select> 
         </div>
   
-  <!-- display imageSlider-->
+
 
           <div style="text-align: center; position: relative; top: 100px; background-color:orangered;">
             <button type="button"   id="btn"><a class="btn btn- mb-0 w-100 text-skyblue" href="#shop-now"><h3>Shop Now>></h3></a></button>
@@ -27,7 +26,6 @@
 
         </div>
       </div>
-            <!--action button-->
 
   
   <!--display top category-->
@@ -38,14 +36,14 @@
               </div>
             </div>
             <div class="row">
-              <div v-for="index in this.categorySize" :key="index" 
+              <div v-for="(category, index) in latestCategories" :key="index" 
               class="col-md-6 col-xl-3 col-12 pt-3 justify-content-around d-flex">
-           <CategoryBox :category="categories[index-1]"/>
-            </div>
+           <CategoryBox :category="category"/>
+          </div>
           </div>
         </div>
         <!--display top product-->
-        <div class="container">
+        <div class="container py-2">
           <div class="row">
               <div class="col-12 text-center">
                 <h2 class="pt-3" id="shop-now">Top Product</h2>
@@ -53,9 +51,9 @@
               </div>
             
         <div class="row">
-              <div v-for="index in this.productSize" :key="index" 
+              <div v-for="(product, index) in latestProducts" :key="index" 
               class="col-md-6 col-xl-3 col-12 pt-3 justify-content-around d-flex">
-           <ProductBox :product="products[index-1]"/>
+           <ProductBox :product="product"/>
             </div>
           </div>
         </div>
@@ -72,19 +70,29 @@ export default {
   props: ["categories", "products"],
   data() {
     return {
-      categorySize: 0,
-      productSize: 0,
+      categorySize: 8,
+      productSize: 20,
     };
   },
   methods:{
     category(e){
       e.preventDefault();
       this.$router.push('/category/show/' + e.target.value )
-    }
     },
+  },
+computed:{
+  latestCategories(){
+    return [...this.categories].reverse().slice(0, this.categorySize);
+  },
+  latestProducts(){
+    return [...this.products].reverse().slice(0, this.productSize)
+  }
+},
+  
   mounted() {
     this.categorySize = Math.min(8, this.categories.length);
     this.productSize = Math.min(20, this.products.length);
+
   },
 };
 </script>

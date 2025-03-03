@@ -11,7 +11,7 @@
     </div>
     <div class="card-body">
       <RouterLink :to="{ name: 'ListProduct', params: { id: category.id } }">
-        <h5 class="card-title">{{ category.name }}</h5>
+        <h5 class="card-title">{{ category.name.substring(0, 25) }}</h5>
       </RouterLink>
       <p class="card-text">{{ category.icon.substring(0, 25) }}</p>
       <RouterLink

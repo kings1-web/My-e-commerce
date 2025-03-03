@@ -1,19 +1,19 @@
 <template>
-    <div class="container mt-4">
+    <div class="container">
         <div class="row">
             <div class="col-12 text-center">
             <h4>our product</h4>
-            <button class="btn" style="float:right">
             <RouterLink :to="{name:'AddProduct'}" >
-                
+            <button class="btn" style="float:right">
                 Add product
-            </RouterLink></button>
+            </button>
+            </RouterLink>
         </div>
         </div>
         <div class="row">
             <!--display all the product-->
             <div v-for="product of products" :key="product.id" 
-            class="col-md-6 col-xl-3 col-12  pt-0 d-flex">
+            class="col-md-6 col-xl-4 col-12  pt-3 d-flex">
                 <ProductBox :product="product"/>
             </div>
         </div>
@@ -34,7 +34,4 @@ export default{
 </script>
 
 <style scope>
- .card-img-top{
-    object-fit: cover;
-   }
 </style>

@@ -1,9 +1,13 @@
 <template>
-  <div class="container h-20">
+  <div class="container">
     <div class="row">
-      <div class="text-center">
+      <div class="col-12 text-center">
         <h3>our category</h3>
-        <RouterLink :to="{name:'AddCategory'}"><button style="float:right">Add Category</button></RouterLink>
+        <RouterLink :to="{name:'AddCategory'}">
+          <button style="float:right">
+            Add Category
+          </button>
+        </RouterLink>
       </div>
     </div>
     <div class="row">
@@ -25,7 +29,9 @@ export default {
     components:{CategoryBox},
   data() {
     return {
-      baseURL: "http://localhost:3000/api/v1/",
+      //baseURL: "https://kings1-web-e-commerce.onrender.com/api/v1/" ,
+     // baseURL: "http://localhost:3000/api/v1/",
+
     };
   },
   methods: {
