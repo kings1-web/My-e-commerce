@@ -17,6 +17,10 @@ import Page from '@/views/Category/Page.vue'
 import CheckOut from '@/views/CheckOut.vue'
 import Success from '@/views/payment/Success.vue'
 import Failure from '@/views/payment/Failure.vue'
+import BillingAddress from '@/components/BillingAddress.vue'
+import { useAuthStore } from '@/stores/auth'
+import UserOrders from '@/views/UserOrders.vue'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -51,6 +55,16 @@ const router = createRouter({
       name: 'AdminProduct',
       component:Product,
     },
+    {
+      path: '/user/order',
+      name: 'UserOrders',
+      component:UserOrders,
+    },
+    {
+      path: '/BillingAddress',
+      name: 'BillingAddress',
+      component:BillingAddress,
+    },
     //category edit
     {
       path: '/admin/category/:id',
@@ -67,7 +81,8 @@ const router = createRouter({
     {
       path:'/admin',
       name:'Admin',
-      component:Admin
+      component:Admin,
+      meta:{requiresAdmin:true}
     },
       //show detail product
     {
@@ -111,6 +126,17 @@ const router = createRouter({
       component:Page
     }
   ],
+})
+
+router.beforeEach((to, from, next)=>{
+  const authStore=useAuthStore();
+  if(to.meta.requiresAuth && !authStore.token){
+    next('/login');
+  }else if(to.meta.requiresAdmin && !authStore.isAdmin){
+    next('/not-authorized');
+  }else{
+    next();
+  }
 })
 
 export default router

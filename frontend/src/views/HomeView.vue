@@ -8,7 +8,7 @@
               start shopping >>
             </a>
           </h3>
-          <p class="lead mb-0 bg-dark p-1 rounded">KINGS1-WEB E-Commerce-Affiliate</p>
+          <p class="lead mb-0 bg-dark p-1 rounded">ROYAL-GOODS </p>
         </header>
         <select class="form-select-lg" v-on:change="category" required>
           <option selected>Shop by Category</option>
@@ -37,7 +37,7 @@
             </div>
             <div class="row">
               <div v-for="(category, index) in latestCategories" :key="index" 
-              class="col-md-6 col-xl-3 col-12 pt-3 justify-content-around d-flex">
+              class="col-md-6 col-xl-3 col-6 pt-3 justify-content-around d-flex">
            <CategoryBox :category="category"/>
           </div>
           </div>
@@ -52,7 +52,7 @@
             
         <div class="row">
               <div v-for="(product, index) in latestProducts" :key="index" 
-              class="col-md-6 col-xl-3 col-12 pt-3 justify-content-around d-flex">
+              class="col-md-6 col-xl-3 col-6 pt-3 justify-content-around d-flex">
            <ProductBox :product="product"/>
             </div>
           </div>

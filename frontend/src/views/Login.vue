@@ -1,5 +1,8 @@
 <template>
   <div class="container text-center">
+   <!-- <div v-if="authStore.sessionExpired" class="alert alert-warning">
+       Session expired. plaese log in again.
+    </div>-->
     <div class="row">
       <div class="col-12 justify-content-center d-flex flex-row pt-5">
         <div id="login" class="flex-item border">
@@ -23,6 +26,8 @@
 
 <script>
 import axios from 'axios';
+import { useAuthStore } from "@/stores/auth.js";
+import { useCartStore } from "@/stores/CartStore";
 export default {
   props: ["baseURL"],
   data() {
@@ -40,16 +45,33 @@ export default {
       };
       await axios.post(`${this.baseURL}users/login`, body)
       .then((res) => {
-        localStorage.setItem("token",res.data.token);
+        //update pinia store
+        const authStore = useAuthStore();
+          authStore.login(res.data.token,);
+
+           //update cart
+           const cartStore=useCartStore();
+          cartStore.loadCartForUser(authStore.userId)
+
+          this.$router.push({ name: "home" });
+
+
+       // localStorage.setItem("token",res.data.token);
         this.$swal({
           text: "login successfully",
           icon: "success",
         });
         this.$emit("fetchData")
-        this.$router.push({ name: "home"});
+       // this.$router.push({ name: "home"});
       }).catch((err) => console.log("err", err));
     },
   },
+mounted(){
+  this.$emit('fetchData')
+  this.$emit('updateCart')
+  //this.login()
+
+}
 };
 </script>
 

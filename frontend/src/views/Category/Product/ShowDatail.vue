@@ -24,14 +24,15 @@
             </div>
         </div>
           <div class="input-group col-md-3 col p-0" >
-            <button>
-             <a :href="product.brand" target="_blank" rel="noopener noreferrer">BUY NOW</a>
-            </button>
-           <!-- <button class="btn" 
+           <!-- <button class="btn btn-primary confirm" style="overflow: auto;"
+       @click="checkout">
+       BUY NOW
+      </button>-->
+            <button class="btn" 
             id="add-to-cart-button" 
-            @click="addToCart">
+            @click="addProductToCart">
               Add to Cart
-            </button>-->
+            </button>
             </div>
           </div>
         <div class="features pt-3">
@@ -48,6 +49,7 @@
 </template>
 
 <script>
+import {useCartStore} from '@/stores/CartStore';
 import axios from "axios";
 export default {
   data(){
@@ -59,48 +61,30 @@ export default {
     }
   },
 
-  watch:{
-    cart:{
-      handler(newCart){
-        localStorage.setItem('cart',JSON.stringify(newCart))
-      },
-      deep:true
-    }
-  },
+ 
  
       props: ["baseURL","categories","products"],
       
    methods: {
-    addToCart(item){
+    addProductToCart(){
      if(!this.token){
       this.$swal({
         text:"please login to add item",
         icon:"error"
       });
       return;
-     }
      
+    }
      //add to cart
-   axios.post(`${this.baseURL}orders?token=${this.token}`,{
-      orderItems:[{product:this.product,
-        quantity:this.quantity}]
-     }).then((res)=>{
-      if(res.status==200){
-        this.$swal({
-        text:"product added successfully (proceed to cart to complete order)",
-        icon:"success"
-      });
-     this.$emit("fetchData")
-      }
-     }).catch((err)=> console.log('err',err))
- 
+     const CartStore=useCartStore();
+       CartStore.addToCart(this.product);
+       alert('Product added to cart!')
     },
-  /*  optimizeImage(imagePublicId){
-    return `https://res.cloudinary.com/b9n3gfzv/image/upload/w_800,h_800,c_limit,f_auto/${imagePublicId}`
-   }*/
-    },
+    checkout(){
+      this.$router.push({name:'BillingAddress'})
+    }
    
-  
+   },
       mounted() {
         
      this.id = this.$route.params.id;

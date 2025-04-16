@@ -9,14 +9,13 @@
       </div>
       <!--loop over the item and display-->
       <div v-if="token">
-        <div v-for="order in orders" :key="order.id">
-      <div v-for="item in order.orderItems"
-      :key="item._id"
+        <div v-for="item in cart" 
+        :key="item._id"
         class="row mt-2 pt-3 justify-content-around"
         >
        <div class="col-2"></div>
        <div class="col-md-3 embde-responsive embed-responsive-16by9  ">
-        <img :src="item.product.image" alt="" class=" card-image-top
+        <img :src="item.image" alt="beatiful product" class=" card-image-top
         w-100 embed-responsive embed-responsive-item"
         style="object-fit:cover;"/>
        </div>
@@ -24,13 +23,13 @@
        <div class="col-md-5 px-3">
         <div class="card-block px-3">
           <h6 class="card-title">
-           <RouterLink :to="{name: 'ShowDetails',params:{id:item.product.id}}">
-            {{ item.product.name }}
+           <RouterLink :to="{name: 'ShowDetails',params:{id:item.id}}">
+            {{ item.name }}
            
           </RouterLink>
           </h6>
           <p class="mb-0 fw-bold" id="iitem-price">
-            $ {{ item.product.price }} per unit
+            $ {{ item.price }} per unit
           </p>
           <p class="m-0">
             Quantity:{{ item.quantity }}
@@ -38,14 +37,15 @@
         </div>
            <p class="mb-0" style="float:right">
             Total: <span class="fw-bold">
-              $ {{ item.product.price * item.quantity }}
+              $ {{ item.price * item.quantity }}
             </span>
            </p>
-           <a href="#" clsss="text-end" @click="deletItem(order.id)">Remove From Cart</a>
+          <a href="#" clsss="text-end" @click="removeItem(item.id)">Remove From Cart</a>
            <br/><br/>
-           
-<button class="btn btn-primary" style="overflow: auto;"><a href="{{ item.product.brand }}"
-  class="text-center text-white">get the product</a></button>
+           <RouterLink :to="{name: 'ShowDetails',params:{id:item.id}}">
+           EddIt Cart
+          </RouterLink>
+
       </div>
       <div class="col-12">
           <div class="col-12"><hr /></div>
@@ -53,15 +53,13 @@
       <!-- display the price-->
        
       </div>
-      </div>
       <div class="total-cost pt-2 text-end">
-      <h5>Total:$ {{ getTotalCartPrice }}</h5>
+      <h5>Total: ₦{{ totalPrice }}</h5>
       <button class="btn btn-primary confirm" style="overflow: auto;"
        @click="checkout">
        proceed for payment
       </button>
-
-       </div>
+      </div>
        </div>
        <div v-if="orders===0" style="text-align: center;">
         <i class="bi bi-cart4" style="font-size:35px; color:orange"></i>
@@ -88,65 +86,51 @@
     </div>
 </template>
 <script>
+import {useCartStore} from '@/stores/CartStore';
 import axios from 'axios';
 export default {
   components:{},
   data() {
     return {
-      cartItems:[],
-      orders:[],
       token: null,
        totalcost:0 ,
+         orders:[],
+
        
     };
   },
   props: ["baseURL","cartCount"],
   methods: {
-//fetch all item in the cart
-async  listCartItem(){
- await axios.get(`${this.baseURL}orders`,{
-  headers:{
-    Authorization:`Bearer ${localStorage.getItem('token')}`
-  }
- })
-   .then(res => {
-    const result=res.data;
-    this.orders=result
-   }).catch((err)=> console.log('err',err))
-},
-
-checkout(){
-      this.$router.push({name:'CheckOut'})
-    },
 
     
-    
-
-async deletItem(orderId){
-    await  axios.delete(`${this.baseURL}orders/${orderId}/?token=${this.token}`)
-    .then((res)=>{
-        if(res.status==201){
-          this.$routeer.go(0)
-        }
-        this.$emit("fetchData")
-      }).catch((err)=> console.log("err",err));
-      this.orders=this.orders.filter(order =>order.id !== orderId);
+    checkout(){
+      this.$router.push({name:'BillingAddress'})
     },
+
+    removeItem(productId){
+      const cartStore=useCartStore();
+      cartStore.removeFromCart(productId)
+    }
+  
   
   },
 
 
 
   computed:{
-    getTotalCartPrice(){
+    totalPrice(){
       //calculate the Total price of all item in the cart
-        return this.orders.reduce((total, order)=> total + (order.totalPrice||0),0);
+        const cartStore=useCartStore();
+        return cartStore.totalPrice;
     },
+    cart(){
+      const cartStore=useCartStore();
+      return cartStore.cart;
+    }
   },
 
   mounted(){
     this.token=localStorage.getItem('token')
-    this.listCartItem();
       this.cartCount
 
   
