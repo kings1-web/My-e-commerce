@@ -1,6 +1,7 @@
 <template>
   <div id="home">
     <div id="background-div" class="page-holder bg-cover">
+    <div style="z-index:2" class="text-end fw-bold fs-1 sticky-bottom"><i style="color:brown;" class="bi bi-chat-dots"><a style="color:brown" href="https://wa.link/3pxzcs">get in touch with us...</a></i></div>
       <div class="container py-5">
         <header class="text-start text-white py-5">
           <h3 class="mb-4 rounded" id="heading">
@@ -57,6 +58,8 @@
             </div>
           </div>
         </div>
+        <a class="fw-bold fs-1 sticky-bottom" href="https://wa.link/3pxzcs"><i class="bi bi-chat-dots" style="color:brown">get in touch with us...</i>   </a>
+
   </div>
 </template>
 

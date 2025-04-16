@@ -29,7 +29,7 @@
           </RouterLink>
           </h6>
           <p class="mb-0 fw-bold" id="iitem-price">
-            $ {{ item.price }} per unit
+            ₦ {{ item.price }} per unit
           </p>
           <p class="m-0">
             Quantity:{{ item.quantity }}
@@ -37,7 +37,7 @@
         </div>
            <p class="mb-0" style="float:right">
             Total: <span class="fw-bold">
-              $ {{ item.price * item.quantity }}
+              ₦ {{ item.price * item.quantity }}
             </span>
            </p>
           <a href="#" clsss="text-end" @click="removeItem(item.id)">Remove From Cart</a>

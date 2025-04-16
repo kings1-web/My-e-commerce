@@ -9,7 +9,7 @@
       <router-link :to="{ name: 'ShowDetails', params: { id: product.id } }">
         <h5 class="card-title">{{ product.name.substring(0, 25) }}</h5>
       </router-link>
-      <p class="card-text text-wrap">{{ product.discription.substring(0, 25) }}...</p>
+      <p class="card-text text-wrap">₦{{ product.price }}</p>
       <RouterLink
         :to="{ name: 'EditProduct', params: { id: product.id } }"
         v-show="$route.name == 'AdminProduct'"
