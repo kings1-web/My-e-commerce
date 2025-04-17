@@ -8,6 +8,7 @@
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
+    
     <form class="d-flex" role="search">
         <input class="form-control me-2" size="150" type="search" id="input-button" placeholder="Search products,category and brands" aria-label="Search"/>
         <button class="btn btn-outline-success" id="search-button-navbar" type="submit"><i class="bi bi-search" style="color:white"></i></button>
@@ -19,6 +20,7 @@
             </RouterLink> 
            
           </div>
+
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item dropdown">

@@ -148,9 +148,16 @@ router.delete("/:id", (req, res) => {
 
   router.post('/create-checkout-session', (req, res, next)=>{
     const items = req.body.items;
+    const billingAddress = req.body.billingAddress;
+    
+
+    if(!items.length || !billingAddress){
+      return next({status:400, message: 'missing required fields'})
+    }
+
     const lineItems = items.map((item)=>({
       price_data:{
-        currency:'ngn',
+        currency:'NGN',
         product_data:{
           name:item.name,
         },
@@ -162,9 +169,49 @@ router.delete("/:id", (req, res) => {
     payment_method_types:['card'],
     line_items:lineItems,
     mode:'payment',
-    success_url:`${baseURL}/payment/success`,
+    success_url:`${baseURL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url:`${baseURL}/payment/failure`,
-    }).then((session)=>res.json({sessionId:session.id}))
+    metadata:{
+      billingAddress:JSON.stringify(billingAddress), items:JSON.stringify(items)
+    }
+    }).then((session)=>res.json({sessionId:session.id, url:session.url}))
+    .catch(next);
+  });
+
+  router.post('/webhook',express.raw({type:'application/json'}), (req, res, next)=>{
+    const sig=req.headers['stripe-signature'];
+
+    Stripe.webhook.constructEvent(req.body, sig, process.env.STRIPE_WEB_SECRET)
+    .then(event=>{
+      if(event.type==='checkout.session.completed'){
+        const session=event.data.object;
+        const billingAddress=JSON.parse(session.metadata.billingAddress);
+        const cartItems=JSON.parse(session.metadata.items);
+
+        return Promise.all(cartItems.map(item=>
+          new OrderItem({
+            quantity:item.quantity,
+            product:item.id,
+          }).save()
+        )).then(orderItemsIds=>{
+          const totalPrice=cartItems.reduce((acc, item)=>acc+item.price*item.quantity,0);
+
+        return new Order({
+          orderItems:orderItemsIds,
+          shippingAddress1:billingAddress.shippingAddress1,
+          shippingAddress2:billingAddress.shippingAddress2,
+          city:billingAddress.city,
+          zip:billingAddress.zip,
+          country:billingAddress.country,
+          phone:billingAddress.phone,
+          user:billingAddress.userId,
+          totalPrice:session.amount_total/100,
+          status:'pending',
+        }).save();
+
+        })
+      }
+    }).then(()=>res.status(200).json({message:'Order created successfully'}))
     .catch(next);
   });
 
