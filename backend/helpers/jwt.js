@@ -16,7 +16,7 @@ const {expressjwt} = require('express-jwt'); // Correct import
       { url: /\/api\/v1\/categories(.*)/, methods: ["GET", "OPTIONS"] },
       { url: /\/api\/v1\/orders(.*)/, methods: ["DELETE", "OPTIONS"] },
       { url: /\/api\/v1\/orders(.*)/, methods: ["GET", "OPTIONS"] },
-      { url: /\/api\/v1\/webhook(.*)/, methods: ["GET", "OPTIONS"] },
+      { url: /\/api\/v1\/webhook(.*)/, methods: ["POST", "OPTIONS"] },
       { url: /\/api\/v1\/orders(.*)/, methods: ["PUT", "OPTIONS"] },
       { url: /\/api\/v1\/orders(.*)/, methods: ["POST", "OPTIONS"] },
       `${api}/payment/success`,
