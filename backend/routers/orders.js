@@ -5,7 +5,7 @@ const router = express.Router();
 require("dotenv/config");
 const Stripe=require('stripe')(process.env.STRIPE_SECRET_KEY);
 //const baseURL="http://localhost:5173"
-const baseURL="https://royalgoods.onrender.com" || "http://localhost:5173";
+const baseURL="http://localhost:5173";
 
 
 
@@ -147,14 +147,10 @@ router.delete("/:id", (req, res) => {
     res.send(userOrderList);
   });
 
-  router.post('/create-checkout-session', (req, res, next)=>{
+  router.post('/create-checkout-session', (req, res)=>{
     const items = req.body.items;
     const billingAddress = req.body.billingAddress;
     
-
-    if(!items.length || !billingAddress){
-      return next({status:400, message: 'missing required fields'})
-    }
 
     const lineItems = items.map((item)=>({
       price_data:{
@@ -173,34 +169,47 @@ router.delete("/:id", (req, res) => {
     success_url:`${baseURL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url:`${baseURL}/payment/failure`,
     metadata:{
-      billingAddress:JSON.stringify(billingAddress), items:JSON.stringify(items)
+      billingAddress:JSON.stringify(billingAddress),
+       items:JSON.stringify(items)
     }
     }).then((session)=>res.json({sessionId:session.id, url:session.url}))
-    .catch(next);
+       .catch(error=>{
+        console.error(error);
+        res.status(500).json({message: 'Stripe session failed'});
+       });
   });
 
-  router.post('/webhook',express.raw({type:'application/json'}), (req, res, next)=>{
+  router.post('/webhook',express.raw({type:'application/json'}), (req, res)=>{
     const sig=req.headers['stripe-signature'];
 
-    Stripe.webhook.constructEvent(req.body, sig, process.env.STRIPE_WEB_SECRET)
-    .then(event=>{
+    let event;
+
+    try{
+      event = Stripe.webhook.constructEvent(req.body, sig, process.env.STRIPE_WEB_SECRET);
+    }catch (err){
+      console.error('webhook signature error:', err.message);
+      return res.status(400).send('webhook Error: ${err.message}');
+    }
+
       if(event.type==='checkout.session.completed'){
         const session=event.data.object;
         const billingAddress=JSON.parse(session.metadata.billingAddress);
-        const cartItems=JSON.parse(session.metadata.items);
+        const cartItems=JSON.parse(session.metadata.cartItems);
 
-        return Promise.all(cartItems.map(item=>
-          new OrderItem({
-            quantity:item.quantity,
-            product:item.id,
-          }).save()
-        )).then(orderItemsIds=>{
-          const totalPrice=cartItems.reduce((acc, item)=>acc+item.price*item.quantity,0);
+         Promise.all(cartItems.map( item=>{
+          const newOrderItem = OrderItem({
+            quantity: item.quantity,
+            prodiuct:item.product._id
+          });
+          return newOrderItem.save();
+        }))
+        .then(orderItems=>{
+          const orderItemsIds = orderItems.map(item=>item._id);
 
-        return new Order({
+        const order = new Order({
           orderItems:orderItemsIds,
-          shippingAddress1:billingAddress.shippingAddress1,
-          shippingAddress2:billingAddress.shippingAddress2,
+          shippingAddress1:billingAddress.address1,
+          shippingAddress2:billingAddress.address2 || '',
           city:billingAddress.city,
           zip:billingAddress.zip,
           country:billingAddress.country,
@@ -208,12 +217,18 @@ router.delete("/:id", (req, res) => {
           user:billingAddress.userId,
           totalPrice:session.amount_total/100,
           status:'pending',
-        }).save();
+        });
+        return order.save();
 
         })
-      }
-    }).then(()=>res.status(200).json({message:'Order created successfully'}))
-    .catch(next);
-  });
+    .then(()=>res.status(200).send('Order created successfully'))
+    .catch(err=>{
+      console.error('Order creation failed:',err);
+      res.status(500).send('failed to save order');
+    });
+  }else{
+    res.status(200).send('webhook recieved');
+  }
+});
 
 module.exports = router;

@@ -30,7 +30,7 @@ export default{
     props:['baseURL'],
     methods:{
      
-        goToCheckOut() {
+       /* goToCheckOut() {
     // Pass product details to the backend
     axios.post(`${this.baseURL}orders/create-checkout-session/?token=${this.token}`, {
          items: this.cartStore.cart.map(item => ({
@@ -46,7 +46,7 @@ export default{
             sessionId: response.data.sessionId,
         });
     }).catch((err) => console.log(err));
-         }
+         }*/
         },
 
 

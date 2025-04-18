@@ -17,7 +17,10 @@ const path = require("path");
 app.use(cors());
 app.options("*", cors());
 
+
+
 //middleware
+
 app.use(bodyParser.json());
 app.use(morgan("tiny"));
 app.use('/public/uploads',express.static(__dirname + '/public/uploads'));
@@ -41,15 +44,19 @@ const productsRouter = require("./routers/products");
 const usersRouter = require("./routers/users");
 
 
-
 const api = process.env.API_URL;
 
 
+
 //routers
+app.use(`${api}/orders/webhook`, ordersRouter);
+app.use(express.json());
 app.use(`${api}/categories`, categoriesRouter);
 app.use(`${api}/orders`, ordersRouter);
 app.use(`${api}/products`, productsRouter);
 app.use(`${api}/users`, usersRouter);
+
+
 
 //database
 

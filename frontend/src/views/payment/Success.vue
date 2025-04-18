@@ -5,7 +5,19 @@
 </template>
 
 <script>
+import {useCartStore} from '@/stores/CartStore'
 export default{
+    async mounted(){
+    const urlParams= new URLSearchParams(window.location.search);
+    const sessionId=urlParams.get('session_id');
 
+    if(sessionId){
+        alert('payment successful! your order is confirmed')
+        const cartStore=useCartStore();
+        cartStore.clearCart();
+    }else{
+        alert('payment not verified')
+    }
+   }
 }
 </script>
