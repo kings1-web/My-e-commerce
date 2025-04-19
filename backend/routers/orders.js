@@ -5,7 +5,7 @@ const router = express.Router();
 require("dotenv/config");
 const Stripe=require('stripe')(process.env.STRIPE_SECRET_KEY);
 //const baseURL="http://localhost:5173"
-const baseURL="https://royalgoods.onrender.com/api/v1";
+const baseURL="";
 
 
 
@@ -166,8 +166,8 @@ router.delete("/:id", (req, res) => {
     payment_method_types:['card'],
     line_items:lineItems,
     mode:'payment',
-    success_url:`${baseURL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url:`${baseURL}/payment/failure`,
+    success_url:'https://royalgoods.onrender.com/payment/success?session_id={CHECKOUT_SESSION_ID}',
+    cancel_url:`https://royalgoods.onrender.com/payment/failure`,
     metadata:{
       billingAddress:JSON.stringify(billingAddress),
        items:JSON.stringify(items)
