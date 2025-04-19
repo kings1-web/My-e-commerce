@@ -10,6 +10,7 @@ export default{
     async mounted(){
     const urlParams= new URLSearchParams(window.location.search);
     const sessionId=urlParams.get('session_id');
+    console.log('stripe session Id:', sessionId);
 
     if(sessionId){
         alert('payment successful! your order is confirmed')
