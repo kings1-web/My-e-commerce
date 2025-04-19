@@ -166,18 +166,45 @@ router.delete("/:id", (req, res) => {
     payment_method_types:['card'],
     line_items:lineItems,
     mode:'payment',
-    success_url:`https://royalgolds.onrender.com/success?session_id={CHECKOUT_SESSION_ID}`,
+    success_url:`https://royalgolds.onrender.com/success`,
     cancel_url:`https://royalgoods.onrender.com/payment/failure`,
-    metadata:{
+    /*metadata:{
       billingAddress:JSON.stringify(billingAddress),
        items:JSON.stringify(items)
-    }
-    }).then((session)=>res.json({sessionId:session.id, url:session.url}))
-       .catch(error=>{
-        console.error(error);
-        res.status(500).json({message: 'Stripe session failed'});
-       });
+    },*/
+
+    });
+
+    Promise.all(cartItems.map( item=>{
+      const newOrderItem = OrderItem({
+        quantity: item.quantity,
+        prodiuct:item.product._id
+      });
+      return newOrderItem.save();
+    }))
+    .then(orderItems=>{
+      const orderItemsIds = orderItems.map(item=>item._id);
+    
+
+    const order = new Order({
+      orderItems:orderItemsIds,
+      shippingAddress1:billingAddress.address1,
+      shippingAddress2:billingAddress.address2 || '',
+      city:billingAddress.city,
+      zip:billingAddress.zip,
+      country:billingAddress.country,
+      phone:billingAddress.phone,
+      user:billingAddress.userId,
+      totalPrice:session.amount_total/100,
+      status:'pending',
+    });
+    return order.save();
+  }).then((session)=>res.json({sessionId:session.id, url:session.url}))
+  .catch(error=>{
+   console.error(error);
+   res.status(500).json({message: 'Stripe session failed'});
   });
+});
 
   router.post('/webhook',express.raw({type:'application/json'}), (req, res)=>{
     const sig=req.headers['stripe-signature'];
@@ -230,5 +257,11 @@ router.delete("/:id", (req, res) => {
     res.status(200).send('webhook recieved');
   }
 });
+
+/*.then((session)=>res.json({sessionId:session.id, url:session.url}))
+       .catch(error=>{
+        console.error(error);
+        res.status(500).json({message: 'Stripe session failed'});
+       });*/
 
 module.exports = router;
