@@ -166,8 +166,8 @@ router.delete("/:id", (req, res) => {
     payment_method_types:['card'],
     line_items:lineItems,
     mode:'payment',
-    success_url:`https://kings-ecommerce.onrender.com/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url:`https://kings-ecommerce.onrender.com/payment/failure`,
+    success_url:`https://RoyalGolds.onrender.com/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url:`https://RoyalGoods.onrender.com/payment/failure`,
     metadata:{
       billingAddress:JSON.stringify(billingAddress),
        items:JSON.stringify(items)
