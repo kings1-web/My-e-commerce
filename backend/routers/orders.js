@@ -175,7 +175,7 @@ router.delete("/:id", (req, res) => {
 
     });
 
-    Promise.all(cartItems.map( item=>{
+    Promise.all(items.map( item=>{
       const newOrderItem = OrderItem({
         quantity: item.quantity,
         prodiuct:item.product._id
