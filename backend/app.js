@@ -28,7 +28,7 @@ app.use(bodyParser.json());
 app.use(morgan("tiny"));
 app.use('/public/uploads',express.static(__dirname + '/public/uploads'));
 app.use(express.static(path.join(__dirname, "dist")));
-app.use('api/v1/orders/webhook',require("./routers/orders"));
+app.use('api/v1/webhook',require("./routers/orders"));
 app.use(express.json());
 
 app.use(errorHandler);
