@@ -8,7 +8,7 @@
 import {useCartStore} from '@/stores/CartStore'
 export default{
     async mounted(){
-    const urlParams= new URLSearchParams(window.location.search);
+    /*const urlParams= new URLSearchParams(window.location.search);
     const sessionId=urlParams.get('session_id');
     console.log('stripe session Id:', sessionId);
 
@@ -18,7 +18,7 @@ export default{
         cartStore.clearCart();
     }else{
         alert('payment not verified')
-    }
+    }*/
    }
 }
 </script>
