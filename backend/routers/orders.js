@@ -147,9 +147,12 @@ router.delete("/:id", (req, res) => {
     res.send(userOrderList);
   });
 
-  router.post('/create-checkout-session', (req, res)=>{
+  router.post('/create-checkout-session', (req, res, next)=>{
     const items = req.body.items;
-    const billingAddress = req.body.billingAddress;
+console.log('Items:',items)
+
+    const address = req.body.address;
+console.log('Address:',address)
     
 
     const lineItems = items.map((item)=>({
@@ -166,45 +169,49 @@ router.delete("/:id", (req, res) => {
     payment_method_types:['card'],
     line_items:lineItems,
     mode:'payment',
-    success_url:`https://royalgolds.onrender.com/success`,
-    cancel_url:`https://royalgoods.onrender.com/payment/failure`,
-    /*metadata:{
-      billingAddress:JSON.stringify(billingAddress),
-       items:JSON.stringify(items)
-    },*/
-
-    });
-
-    Promise.all(items.map( item=>{
+    success_url:'http://localhost:5173/payment/success?session_id={CHECKOUT_SESSION_ID}',
+    cancel_url:'http://localhost:5173/payment/failure',
+     metadata:{
+      items:JSON.stringify(items),
+      address:JSON.stringify(address)
+     }
+    
+  }).then((session)=>res.json({sessionId:session.id, url:session.url}))
+    .catch(next);
+  });
+   /* Promise.all(items.map( item=>{
       const newOrderItem = OrderItem({
         quantity: item.quantity,
-        prodiuct:item.product._id
+        prodiuct:item.product.id
       });
       return newOrderItem.save();
     }))
     .then(orderItems=>{
-      const orderItemsIds = orderItems.map(item=>item._id);
+      const orderItemsIds = orderItems.map(item=>item.id);
     
 
-    const order = new Order({
-      orderItems:orderItemsIds,
-      shippingAddress1:billingAddress.address1,
-      shippingAddress2:billingAddress.address2 || '',
-      city:billingAddress.city,
-      zip:billingAddress.zip,
-      country:billingAddress.country,
-      phone:billingAddress.phone,
-      user:billingAddress.userId,
-      totalPrice:session.amount_total/100,
+    let order = new Order({
+      //orderItems:lineItems,
+      shippingAddress1:address.shippingAddress1,
+      shippingAddress2:address.shippingAddress2 || '',
+      city:address.city,
+      zip:address.zip,
+      country:address.country,
+      phone:address.phone,
+      user:address.userId,
+      //totalPrice:session.amount_total/100,
       status:'pending',
+    
     });
-    return order.save();
-  }).then((session)=>res.json({sessionId:session.id, url:session.url}))
-  .catch(error=>{
-   console.error(error);
-   res.status(500).json({message: 'Stripe session failed'});
-  });
-});
+    order = await order.save();
+  if (!order) 
+    return res.status(400).send("the order cannot be created");
+  res.send(order);*/
+  ;
+
+
+
+
 
   router.post('/webhook',express.raw({type:'application/json'}), (req, res)=>{
     const sig=req.headers['stripe-signature'];
@@ -220,8 +227,8 @@ router.delete("/:id", (req, res) => {
 
       if(event.type==='checkout.session.completed'){
         const session=event.data.object;
-        const billingAddress=JSON.parse(session.metadata.billingAddress);
-        const cartItems=JSON.parse(session.metadata.cartItems);
+        const address=JSON.parse(session.metadata.address);
+        const cartItems=JSON.parse(session.metadata.items);
 
          Promise.all(cartItems.map( item=>{
           const newOrderItem = OrderItem({
@@ -235,13 +242,13 @@ router.delete("/:id", (req, res) => {
 
         const order = new Order({
           orderItems:orderItemsIds,
-          shippingAddress1:billingAddress.address1,
-          shippingAddress2:billingAddress.address2 || '',
-          city:billingAddress.city,
-          zip:billingAddress.zip,
-          country:billingAddress.country,
-          phone:billingAddress.phone,
-          user:billingAddress.userId,
+          shippingAddress1:address.address1,
+          shippingAddress2:address.address2 || '',
+          city:address.city,
+          zip:address.zip,
+          country:address.country,
+          phone:address.phone,
+          user:address.userId,
           totalPrice:session.amount_total/100,
           status:'pending',
         });

@@ -14,10 +14,7 @@ const path = require("path");
 
 
 
-app.use(cors({
-  origin: 'https://kings-ecommerce.onrender.com',
-  credentials:true
-}));
+app.use(cors());
 app.options("*", cors());
 
 
