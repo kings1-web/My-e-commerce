@@ -169,8 +169,8 @@ console.log('Address:',address)
     payment_method_types:['card'],
     line_items:lineItems,
     mode:'payment',
-    success_url:'http://localhost:5173/payment/success?session_id={CHECKOUT_SESSION_ID}',
-    cancel_url:'http://localhost:5173/payment/failure',
+    success_url:'https://kings-ecommerce/payment/success?session_id={CHECKOUT_SESSION_ID}',
+    cancel_url:'https://kings-ecommerce/payment/failure',
      metadata:{
       items:JSON.stringify(items),
       address:JSON.stringify(address)
