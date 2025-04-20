@@ -169,8 +169,8 @@ console.log('Address:',address)
     payment_method_types:['card'],
     line_items:lineItems,
     mode:'payment',
-    success_url:'https://royalgoods.onrender.com/payment/success?session_id={CHECKOUT_SESSION_ID}',
-    cancel_url:'https://royalgoods.onrender.com/payment/failure',
+    success_url:'https://royalgoods.onrender.com/api/v1/payment/success?session_id={CHECKOUT_SESSION_ID}',
+    cancel_url:'https://royalgoods.onrender.com/api/v1/payment/failure',
      metadata:{
       items:JSON.stringify(items),
       address:JSON.stringify(address)
