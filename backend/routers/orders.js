@@ -160,6 +160,7 @@ console.log('Address:',address)
         currency:'NGN',
         product_data:{
           name:item.name,
+          images:item.image,
         },
         unit_amount:item.unit_price*100,
       },
@@ -211,7 +212,7 @@ console.log('Address:',address)
 
 
 
-router.post('/webhook',express.raw({type:'application/json'}), (req, res)=>{
+router.post('/webhook',express.raw({type:'application/json'}),(req, res)=>{
   const sig=req.headers['stripe-signature'];
 
   let event;
@@ -228,17 +229,17 @@ router.post('/webhook',express.raw({type:'application/json'}), (req, res)=>{
       const address=JSON.parse(session.metadata.address);
       const cartItems=JSON.parse(session.metadata.items);
 
-       Promise.all(cartItems.map( item=>{
+       Promise.all(cartItems.map(item=>{
         const newOrderItem = OrderItem({
           quantity: item.quantity,
           prodiuct:item.product._id
         });
         return newOrderItem.save();
       }))
-      .then(orderItems=>{
+      .then(async orderItems=>{
         const orderItemsIds = orderItems.map(item=>item._id);
 
-      const order = new Order({
+        let order = new Order({
         orderItems:orderItemsIds,
         shippingAddress1:address.address1,
         shippingAddress2:address.address2 || '',
@@ -250,7 +251,7 @@ router.post('/webhook',express.raw({type:'application/json'}), (req, res)=>{
         totalPrice:session.amount_total/100,
         status:'pending',
       });
-      return order.save();
+      order = await order.save();
 
       })
   .then(()=>res.status(200).send('Order created successfully'))
