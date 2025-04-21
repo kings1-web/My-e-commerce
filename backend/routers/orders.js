@@ -176,7 +176,7 @@ console.log('Address:',address)
       address:JSON.stringify(address)
      }
     
-  }).then((session)=>res.json({sessionId:session.id, url:session.url}))
+  }).then((session)=>res.send({sessionId:session.id, url:session.url}))
     .catch(next);
   });
    /* Promise.all(items.map( item=>{
