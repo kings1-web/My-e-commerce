@@ -160,7 +160,7 @@ console.log('Address:',address)
         currency:'NGN',
         product_data:{
           name:item.name,
-          images:item.image,
+          images:[item.image],
         },
         unit_amount:item.unit_price*100,
       },
