@@ -136,7 +136,8 @@ router.delete("/:id", (req, res) => {
   });
 
   router.get("/get/userorders/:userid", async (req, res) => {
-    const userOrderList = await Order.find({user: req.params.userid}).populate({
+    const {userid} = req.params;
+    const userOrderList = await Order.find({user:userid}).populate({
       path: 'orderItems', populate:{
         path:'product', populate: 'category'}
       }).sort({'dateOrdered':-1});
@@ -160,7 +161,7 @@ console.log('Address:',address)
         currency:'NGN',
         product_data:{
           name:item.name,
-          images:[item.image],
+          images:[item.images],
         },
         unit_amount:item.unit_price*100,
       },
@@ -252,7 +253,10 @@ router.post('/webhook',express.raw({type:'application/json'}),(req, res)=>{
         status:'pending',
       });
       order = await order.save();
-
+      if (!order) 
+        return res.status(400).send("the order cannot be created");
+      res.send(order)
+      console.log('check:', order)
       })
   .then(()=>res.status(200).send('Order created successfully'))
   .catch(err=>{

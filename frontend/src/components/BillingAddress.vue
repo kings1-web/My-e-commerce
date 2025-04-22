@@ -91,6 +91,7 @@ checkout(){
     axios.post(`${this.baseURL}orders/create-checkout-session/?token=${this.token}`, {
          items:cartStore.cart.map(item => ({
             name: item.name,
+            images:item.image,
             quantity: item.quantity,
             unit_price: item.price
         })),
