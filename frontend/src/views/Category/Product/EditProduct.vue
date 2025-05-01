@@ -115,6 +115,7 @@
           <button type="button" class="btn btn-primary" @click="EddProduct()">
             ADD PRODUCT
           </button>
+
         </form>
       </div>
       <div class="col-3"></div>
@@ -171,6 +172,7 @@ export default {
         })
         .catch((err) => console.log("err", err));
     },
+
   },
 
   mounted() {

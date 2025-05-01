@@ -5,7 +5,7 @@
       <img
         :src="category.image"
         class="card-img-top"
-        alt="..."
+        alt="category images"
       />
     </RouterLink>
     </div>
@@ -13,21 +13,56 @@
       <RouterLink :to="{ name: 'ListProduct', params: { id: category.id } }">
         <h5 class="card-title">{{ category.name.substring(0, 25) }}</h5>
       </RouterLink>
-      <p class="card-text">{{ category.icon.substring(0, 25) }}</p>
+      <h6 class="card-text wrap">{{ category.icon.substring(0, 25) }}</h6>
+      <div class="d-flex justify-content-between mt-3">
       <RouterLink
         :to="{ name: 'EditCategory', params: { id: category.id } }"
         v-show="$route.name == 'Category'"
       >
         <button class="btn btn-primary">Edit</button>
       </RouterLink>
+      <button class="btn btn-danger ml-2" @click="deleteCategory()" v-show="$route.name == 'Category'">
+            DELETE
+          </button>
+          </div>
     </div>
   </div>
 </template>
 <script>
+import axios from 'axios';
 export default {
   name: "CategoryBox",
+  data(){
+    return{
+       baseURL:"https://royalgoods.onrender.com/api/v1/",
+     //baseURL: "http://localhost:3000/api/v1/",
+    }
+  },
   props: ["category"],
-  methods: {},
+  methods: {
+    async deleteCategory(){
+  if(!confirm('are you sure you want to delete this category?'))return;
+
+  try{
+    await axios.delete(`${this.baseURL}categories/${this.category.id}`,{
+      headers:{Authorization:`Bearer ${localStorage.getItem("token")}`
+
+      }
+    });
+    this.$emit("category-deleted",this.category.id);
+    this.$swal({
+             text:"category deleted successfully",
+             icon:"success"
+              });
+  }catch(err){
+    console.error('Error deleting category:', err)
+    this.$swal({
+             text:"Failed to delete category!",
+             icon:"error"
+              });
+  }
+}
+  },
 };
 </script>
 

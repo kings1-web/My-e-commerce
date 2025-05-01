@@ -3,6 +3,7 @@ import { defineStore } from "pinia";
 export const useCartStore = defineStore("cart", {
   state: () => ({
     cartCount:0,
+    quantity:1,
     userId:localStorage.getItem("userId") || null,
     cart: localStorage.getItem('cart') || [],
     billingAddress:{
@@ -29,15 +30,17 @@ export const useCartStore = defineStore("cart", {
     
   },
   actions: {
-    addToCart(product) {
+    addToCart(product, quantity=1) {
       //check if the product is already in the cart
       const existingProduct = this.cart.find((item) => item.id === product.id);
       if (existingProduct) {
         //increase the quantity if the product exist in the cart
-        existingProduct.quantity += 1;
+        existingProduct.quantity += quantity;
       } else {
         //add the product to the cart with an initial quantity of 1
-        this.cart.push({ ...product, quantity: 1 });
+        this.cart.push({ ...product, id: product._id || product.id, quantity });
+
+       // this.cart.push({ ...product, quantity });
       }
       this.cartCount=this.totalItems
       this.saveCart();

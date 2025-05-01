@@ -5,6 +5,7 @@ export const useAuthStore = defineStore("auth", {
   state: () => ({
     userId:localStorage.getItem('userId') || null,
     token:localStorage.getItem('token') || null,
+    email:localStorage.getItem('email') || null,
     isAdmin:localStorage.getItem('isAdmin')==='true',
     sessionExpired:false
   }),
@@ -21,21 +22,24 @@ export const useAuthStore = defineStore("auth", {
     }
   },
   actions: {
-    login(token) {
+    login({token, email}) {
       const decoded=jwtDecode(token);
       this.token=token;
       this.userId =decoded.userId;
       this.isAdmin=decoded.isAdmin;
+      this.email=email
       this.sessionExpired=false;
 
       //store user and token in localstorage
       localStorage.setItem('token',token)
       localStorage.setItem('userId',decoded.userId);
       localStorage.setItem('isAdmin', decoded.isAdmin);
+      localStorage.setItem('email', email);
     },
   
     logout() {
       this.userId = null;
+      this.email = null;
       this.token = null;
       this.isAdmin=false;
       this.sessionExpired=false;
@@ -43,6 +47,7 @@ export const useAuthStore = defineStore("auth", {
 
       //remove from localStorage
       localStorage.removeItem('userId');
+      localStorage.removeItem('email');
       localStorage.removeItem('token');
       localStorage.removeItem('isAdmin');
     },
@@ -54,7 +59,8 @@ export const useAuthStore = defineStore("auth", {
     },
     loadFromStorage(){
       const token=localStorage.getItem('token');
-      if(token)this.login(token)
+      const email=localStorage.getItem('email');
+      if(token && email)this.login({token, email})
     }
   },
 });

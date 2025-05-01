@@ -13,7 +13,7 @@
     <div class="row">
       <div v-for="category of categories" :key="category.id"
       class="col-md-6 col-xl-4 col-12 pt-3 d-flex"><br/><br/>
-       <CategoryBox :category="category"/>
+       <CategoryBox :category="category" @category-deleted="$emit('category-deleted',$event)"/>
        <br/>
       </div>
     </div>

@@ -79,7 +79,7 @@ export default {
   methods:{
     logout(){
       localStorage.removeItem('token');
-      localStorage.removeItem('uderId');
+      localStorage.removeItem('userId');
       localStorage.removeItem('isAdmin');
       this.token=null
       this.$swal({
@@ -89,14 +89,17 @@ export default {
       const cartStore = useCartStore();
         cartStore.resetCart();
       this.$router.push({ name: "home" });
+      this.$emit("fetchData")
     },
   },
   computed:{
     ...mapState(useCartStore,['cartCount'])
   },
   mounted() {
+  this.$emit('fetchData')
     this.$emit('updateCart')
     this.token = localStorage.getItem("token");
+
   },
  
 };

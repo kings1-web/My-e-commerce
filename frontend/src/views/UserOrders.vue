@@ -11,27 +11,37 @@
         <div class="card-header"><strong>Order ID:</strong>{{ order.id }}
         </div>
         <div class="card-body">
-          <p><strong>Date:</strong>{{ formatDate(order.dateOrdered) }}</p>
+          <h6><strong>Date:</strong>{{ formatDate(order.dateOrdered) }}</h6>
           <p>
             <strong>Status:</strong
             ><span class="badge bg-primary">{{ order.status }}</span>
           </p>
-          <p>
-            <strong>Status:</strong
+          <h6>
+            <strong>TotalPrice:</strong
             >{{formatPrice(order.totalPrice)}}
-          </p>
+            </h6>
           <ul class="list-group list-group-flush mt-3">
             <li
             class="list-group-item"
             v-for="item in order.orderItems"
             :key="item.id"
             >
-           <h6> {{ item.product.name }} - quantity: {{ item.quantity }}</h6>
+            <div v-if="item.product">
+    <h6>{{ item.product.name }}</h6>
+    <img :src="item.product.image" alt="Product image" width="100" />
+    <h6>Price: {{ item.product.price }} NGN</h6>
+  </div>
+  <div v-else>
+    <p>Product info not available</p>
+  </div>
+  <h6 class="text-break">Quantity: {{ item.quantity }}</h6>
             </li>
             </ul>
         </div>
+
       </div>
     </div>
+
     <!--Order Detail Modal-->
 
   </div>
@@ -43,6 +53,7 @@ import { useAuthStore } from "@/stores/auth.js";
 export default {
   data() {
     return {
+      token:null,
       orders: [],
       loading:true
     };
@@ -50,6 +61,14 @@ export default {
   props: ["baseURL"],
   methods: {
     async fetchOrders() {
+      if(!this.token){
+      this.$swal({
+        text:"please login first  before checking order",
+        icon:"error"
+      });
+      return;
+     
+    }
         const auth=useAuthStore();
       try {
         const response = await axios.get(`${this.baseURL}orders/get/userorders/${auth.userId}`, {
@@ -77,6 +96,7 @@ export default {
     
   },
   mounted() {
+    this.token=localStorage.getItem("token")
     this.fetchOrders();
   },
 };

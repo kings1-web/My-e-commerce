@@ -10,7 +10,7 @@
       <!--loop over the item and display-->
       <div v-if="token">
         <div v-for="item in cart" 
-        :key="item._id"
+        :key="item.id"
         class="row mt-2 pt-3 justify-content-around"
         >
        <div class="col-2"></div>
@@ -23,8 +23,9 @@
        <div class="col-md-5 px-3">
         <div class="card-block px-3">
           <h6 class="card-title">
-           <RouterLink :to="{name: 'ShowDetails',params:{id:item.id}}">
-            {{ item.name }}
+
+            <RouterLink :to="{name: 'ShowDetails',params:{id:item.id}}">
+              {{ item.name }}
            
           </RouterLink>
           </h6>

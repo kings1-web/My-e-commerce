@@ -5,7 +5,9 @@
   <RouterView v-if="categories && products" style="min-height:60vh;"
   :baseURL="baseURL"
   :categories="categories"
+  @category-deleted="removeCategory"
   :products="products"
+  @product-deleted="removeProduct"
   @fetchData="fetchData"
   >
 </RouterView>
@@ -26,7 +28,7 @@ export default {
   data(){
     return {
     // baseURL: "https://kings1-web-e-commerce.onrender.com/api/v1/",
-     baseURL:"https://royalgoods.onrender.com/api/v1/",
+    baseURL:"https://royalgoods.onrender.com/api/v1/",
     // baseURL: "http://localhost:3000/api/v1/",
       products:null,
       categories:null,
@@ -52,9 +54,18 @@ export default {
       this.products=res.data
     }).catch((err)=>console.log('err',err));
       
-  
+  },
+
+  removeProduct(deletedId){
+    this.products=this.products.filter(p => p.id !== deletedId)
+  },
+
+  removeCategory(deletedId){
+    this.categories=this.categories.filter(c => c.id !== deletedId)
   },
   
+  
+
     resetCartCount(){
       this.cartCount=0
     }

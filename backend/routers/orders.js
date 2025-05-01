@@ -1,9 +1,10 @@
 const { Order } = require("../models/order");
+const axios =require('axios');
 const express = require("express");
 const { OrderItem } = require("../models/order-item");
 const router = express.Router();
 require("dotenv/config");
-const Stripe=require('stripe')(process.env.STRIPE_SECRET_KEY);
+//const Stripe=require('stripe')(process.env.STRIPE_SECRET_KEY);
 //const baseURL="http://localhost:5173"
 const baseURL="";
 
@@ -11,10 +12,11 @@ const baseURL="";
 
 
 router.get("/", async (req, res) => {
-  const orderList = await Order.find().populate('user','name')
+  const orderList = await Order.find().populate('user','name email')
   .populate({
     path: 'orderItems', populate:{
-      path:'product', populate: 'category'}
+      path:'product', populate:{path:'category',select:'name'}
+    }
   })
   .sort({'dateOrdered':-1});
 
@@ -28,7 +30,7 @@ router.get("/:id", async (req, res) => {
   const order = await Order.findById(req.params.id).sort({'dateOrdered':-1})
   .populate('user', 'name')
   .populate({
-    path: 'orderItems', populate:{
+    path: 'OrderItems', populate:{
       path:'product', populate: 'category'}
     });
 
@@ -37,46 +39,100 @@ router.get("/:id", async (req, res) => {
   }
   res.send(order);
 });
+// step 1:calculate total and create orderItem
+router.post('/', async (req, res) => {
+  try {
+    const orderItemsIds = await Promise.all(
+      req.body.orderItems.map(async (item) => {
+        let productId;
 
-router.post("/", async (req, res) => {
-    const orderItemsIds =Promise.all(req.body.orderItems.map(async (orderItem)=>{
-      let newOrderItem = new  OrderItem({
-        quantity:orderItem.quantity,
-        product:orderItem.product
+        // Ensure the product ID is present
+        if (typeof item.product === 'object' && item.product._id) {
+          productId = item.product._id;
+        } else if (item._id) {
+          productId = item._id;
+        } else {
+          throw new Error("Missing product ID in order item");
+        }
+
+        const newOrderItem = new OrderItem({
+          quantity: item.quantity,
+          product: productId,
+        });
+
+        return (await newOrderItem.save())._id;
       })
-      newOrderItem = await newOrderItem.save();
-      return newOrderItem._id;
-  }))
-   const orderItemsIdsResolved = await orderItemsIds;
+    );
 
+    // Step 2: Calculate total price
+    const totalPrices = await Promise.all(
+      orderItemsIds.map(async (orderItemId) => {
+        const orderItem = await OrderItem.findById(orderItemId).populate("product");
 
-   const totalPrices =await Promise.all(orderItemsIdsResolved.map(async (orderItemId)=>{
-   const orderItem = await OrderItem.findById(orderItemId).populate('product', 'price')
-   const totalPrice = orderItem.product.price * orderItem.quantity;
-     return totalPrice
-   }))
+        if (!orderItem || !orderItem.product) {
+          throw new Error("Order item or product not found");
+        }
 
-   const totalPrice = totalPrices.reduce((a,b)=> a + b, 0);
+        return orderItem.product.price * orderItem.quantity;
+      })
+    );
 
-   console.log(totalPrices)
+    const totalPrice = totalPrices.reduce((a, b) => a + b, 0);
 
-  let order = new Order({
-    orderItems:orderItemsIdsResolved,
-    shippingAddress1: req.body.shippingAddress1,
-    shippingAddress2: req.body.shippingAddress2,
-    city: req.body.city,
-    zip: req.body.zip,
-    country: req.body.country,
-    phone: req.body.phone,
-    status: req.body.status,
-    totalPrice:totalPrice,
-    user: req.body.user,
-  });
-  order = await order.save();
-  if (!order) 
-    return res.status(400).send("the order cannot be created");
-  res.send(order);
+    return res.json({
+      success: true,
+      orderItems: orderItemsIds,
+      totalPrice: totalPrice,
+    });
+  } catch (err) {
+    console.error("Order creation error:", err);
+    res.status(500).json({ success: false, message: "Could not create order" });
+  }
 });
+
+// Step 2: Verify Transaction (GET /api/v1/orders/verify/:ref)
+router.get('/verify/:ref', async (req, res) => {
+  try {
+    const response = await axios.get(
+      `https://api.paystack.co/transaction/verify/${req.params.ref}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        },
+      }
+    );
+
+    const data = response.data.data;
+
+    if (data.status === "success") {
+      const meta = data.metadata;
+
+      // Create order using the metadata from Paystack
+      const order = new Order({
+        orderItems: meta.orderItems,
+        shippingAddress1: meta.shipping.shippingAddress1,
+        shippingAddress2: meta.shipping.shippingAddress2,
+        city: meta.shipping.city,
+        zip: meta.shipping.zip,
+        country: meta.shipping.country,
+        phone: meta.shipping.phone,
+        status: "paid",  // Update the order status to "paid"
+        totalPrice: meta.totalPrice,
+        user: meta.user,
+      });
+
+      const savedOrder = await order.save();
+      return res.json({ success: true, order: savedOrder });
+    }
+
+    res.status(400).json({ success: false, message: "Payment not successful" });
+  } catch (err) {
+    console.error("Verification failed:", err);
+    res.status(500).json({ success: false, message: "Error verifying payment" });
+  }
+});
+
+ 
 
 router.put("/:id", async (req, res) => {
   const order = await Order.findByIdAndUpdate(
@@ -136,19 +192,24 @@ router.delete("/:id", (req, res) => {
   });
 
   router.get("/get/userorders/:userid", async (req, res) => {
-    const {userid} = req.params;
+    const userid = req.params.userid;
+   // console.log('user id:', userid)
     const userOrderList = await Order.find({user:userid}).populate({
-      path: 'orderItems', populate:{
-        path:'product', populate: 'category'}
+      path:'orderItems',
+       populate:{
+        path:'product',
+        populate: 'category'
+        }
       }).sort({'dateOrdered':-1});
+      console.log('user order:', userOrderList)
   
     if (!userOrderList) {
       res.status(500).json({ success: false });
     }
-    res.send(userOrderList);
+    res.status(200).send(userOrderList);
   });
 
-  router.post('/create-checkout-session', (req, res, next)=>{
+ /* router.post('/create-checkout-session', async(req, res, next)=>{
     const items = req.body.items;
 console.log('Items:',items)
 
@@ -161,7 +222,7 @@ console.log('Address:',address)
         currency:'NGN',
         product_data:{
           name:item.name,
-          images:[item.images],
+         // images:[item.images],
         },
         unit_amount:item.unit_price*100,
       },
@@ -177,23 +238,34 @@ console.log('Address:',address)
       items:JSON.stringify(items),
       address:JSON.stringify(address)
      }
+    }).then((session)=>res.json({sessionId:session.id, url:session.url}))
+    .catch(error=>{
+     console.error(error);
+     res.status(500).json({message: 'Stripe session failed'});
+    });
+    })*/
     
-  }).then((session)=>res.send({sessionId:session.id, url:session.url}))
-    .catch(next);
-  });
-   /* Promise.all(items.map( item=>{
-      const newOrderItem = OrderItem({
+  /* const orderItemIds = Promise.all(items.map(async(item)=>{
+      const newOrderItem = new OrderItem({
         quantity: item.quantity,
-        prodiuct:item.product.id
+        product:item.id
       });
-      return newOrderItem.save();
+      //const savedItem = await newOrderItem.save()
+     // return savedItem.id;
     }))
-    .then(orderItems=>{
-      const orderItemsIds = orderItems.map(item=>item.id);
-    
+   const orderItemsIdsResolved = await orderItemIds;
+
+    const totalPrices =await Promise.all(orderItemsIdsResolved.map(async(_id)=>{
+      const orderItem = await OrderItem.findById(_id).populate('product', 'price');
+      return orderItem.product.price * orderItem.quantity;
+    }));
+    console.log('price1:',totalPrices)
+
+    const totalPrice = totalPrices.reduce((acc, val)=> acc + val, 0)
+    console.log('price:',totalPrice)
 
     let order = new Order({
-      //orderItems:lineItems,
+      orderItems:orderItemsIdsResolved,
       shippingAddress1:address.shippingAddress1,
       shippingAddress2:address.shippingAddress2 || '',
       city:address.city,
@@ -201,19 +273,22 @@ console.log('Address:',address)
       country:address.country,
       phone:address.phone,
       user:address.userId,
-      //totalPrice:session.amount_total/100,
+      totalPrice:totalPrice,
       status:'pending',
     
     });
-    order = await order.save();
+    console.log('order:',order)
+   // order = await order.save();
   if (!order) 
     return res.status(400).send("the order cannot be created");
-  res.send(order);*/
-  ;
+  res.send(order);
 
+//res.json({sessionId:session.id})
+})*/
+ 
 
-
-router.post('/webhook',express.raw({type:'application/json'}),(req, res)=>{
+/*router.post('/webhook',express.raw({type:'application/json'}), async(req, res)=>{
+  console.log('webhook triggered')
   const sig=req.headers['stripe-signature'];
 
   let event;
@@ -249,7 +324,7 @@ router.post('/webhook',express.raw({type:'application/json'}),(req, res)=>{
         country:address.country,
         phone:address.phone,
         user:address.userId,
-        totalPrice:session.amount_total/100,
+        totalPrice:session.unit_amount/100,
         status:'pending',
       });
       order = await order.save();
@@ -266,7 +341,7 @@ router.post('/webhook',express.raw({type:'application/json'}),(req, res)=>{
 }else{
   res.status(200).send('webhook recieved');
 }
-});
+});*/
 
   
 

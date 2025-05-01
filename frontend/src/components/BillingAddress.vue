@@ -47,73 +47,137 @@
 
 </template>
 
+
+
 <script>
-import { useCartStore } from '@/stores/CartStore';
-import axios from 'axios';
-export default{
-     data(){
-      return {
-        stripeApiToken:"pk_test_51QezySJRvycA08QovbT1WKFZdnHc6ucWV1F8o47i2oxCvDlBty2VUYTazwM0S1hChabm5MYE5I2yJLpWKpjkuxkO00JFwgCneJ",
-            stripe:null,
-            token:localStorage.getItem('token'),
+import { useCartStore } from '@/stores/CartStore';  // Assuming you're using Pinia or Vuex
 
-
-           address:{
-            shippingAddress1: "",
-            shippingAddress2: "",
-            city:"",
-            zip:"",
-            country:"",
-            phone: "",
-            user:localStorage.getItem('userId') || null,
-          }
-      }
-     },
-  props: ["baseURL"],
-    methods:{ 
-     saveBilling(){
-      const cartStore=useCartStore();
-      cartStore.cart
+export default {
+  data() {
+    return {
+      token: localStorage.getItem('token'),  // Assuming JWT token is stored in localStorage
+      address: {
+        shippingAddress1: "",
+        shippingAddress2: "",
+        city: "",
+        zip: "",
+        country: "",
+        phone: "",
+        user: localStorage.getItem('userId') || null,
+        email: localStorage.getItem('email') || null,
       },
-      
-     
+    };
+  },
+  props:["baseURL"],
+  computed: {
+    cart() {
+      const cartStore = useCartStore();
+      return cartStore.cart;
+    },
+  },
+  methods: {
+    async goToCheckOut() {
+      if (!this.cart.length) {
+        this.$swal({
+             text:"Cart is empty!",
+             icon:"error"
+              });
+       // alert("Cart is empty");
+        return;
+      }
 
+      // Step 1: Create order
+      const res = await fetch(`${this.baseURL}orders/`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderItems: this.cart,  // Pass the cart items to backend
+        }),
+      });
 
-checkout(){
-      this.$router.push({name:'CheckOut'})
+      const result = await res.json();
+
+      if (!result.success) {
+        this.$swal({
+             text:"Failed to create order!",
+             icon:"error"
+              });
+        //alert('Failed to create order');
+        return;
+      }
+
+      const { totalPrice, orderItems } = result;
+
+      // Step 2: Trigger Paystack
+      const handler = PaystackPop.setup({
+        key: 'pk_live_bbc0e2472f9d0b0b0d5c477017165323dd7542a6',  // Replace with your Paystack public key
+        email: this.address.email,
+        amount: totalPrice * 100,  // Paystack expects amount in kobo
+        currency: 'NGN',
+        ref: '' + Math.floor(Math.random() * 1000000000 + 1),  // Random reference number
+        metadata: {
+          orderItems,
+          shipping: {
+            shippingAddress1: this.address.shippingAddress1,
+            shippingAddress2: this.address.shippingAddress2,
+            city: this.address.city,
+            zip: this.address.zip,
+            country: this.address.country,
+            phone: this.address.phone,
+          },
+          user: this.address.user,
+          totalPrice: totalPrice,
+        },
+        callback: (response) => {
+          this.verifyAndSaveOrder(response.reference);  // Verify payment after successful callback
+        },
+        onClose: () => {
+          alert('Transaction was cancelled');
+        },
+      });
+      handler.openIframe();
     },
 
-    goToCheckOut() {
+    // Verify the payment and save the order
+    async verifyAndSaveOrder(reference) {
+      try {
+        const res = await fetch(`${this.baseURL}orders/verify/${reference}`);
+        const data = await res.json();
 
-      const cartStore=useCartStore();
-      cartStore.cart
-    // Pass product details to the backend
-    axios.post(`${this.baseURL}orders/create-checkout-session/?token=${this.token}`, {
-         items:cartStore.cart.map(item => ({
-            name: item.name,
-            images:item.image,
-            quantity: item.quantity,
-            unit_price: item.price
-        })),
-        address:this.address,
-    }).then((response) => {
-        localStorage.setItem('sessionId', response.data.sessionId);
-        console.log('sessionId', response.data);
-        this.stripe.redirectToCheckout({
-            sessionId: response.data.sessionId,
-        });
-    }).catch((err) => console.log(err));
-         
-        },
+        if (data.success) {
+           this.$swal({
+             text:"Payment successful and order saved!",
+             icon:"success"
+              });
+              
+     
+    
+         // alert('');
 
-   
-},
+          // 1. Clear cart
+          const cartStore = useCartStore();
+          cartStore.clearCart();
 
-    mounted(){
-        this.token=localStorage.getItem('token');
-        this.stripe=window.Stripe(this.stripeApiToken)
-
-        
-    }
-}
+          // 2. Redirect to success page
+          this.$router.push({ name: 'home' });  // Ensure this route is configured in Vue Router
+        } else {
+          this.$swal({
+             text:"Verification failed!",
+             icon:"error"
+              });
+        }
+      } catch (err) {
+        console.error('Verify order error:', err);
+        this.$swal({
+             text:"server error during verification!",
+             icon:"error"
+              });
+       // alert('Server error during verification.');
+      }
+    },
+  },
+};
 </script>

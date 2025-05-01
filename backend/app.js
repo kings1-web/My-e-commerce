@@ -10,9 +10,16 @@ require("dotenv/config");
 
 const authJwt = require("./helpers/jwt");
 const errorHandler = require("./helpers/error-handler");
+//route
+const categoriesRouter = require("./routers/categories");
+const ordersRouter = require("./routers/orders");
+const productsRouter = require("./routers/products");
+const usersRouter = require("./routers/users");
+
 const path = require("path");
 
 
+const api = process.env.API_URL;
 
 
 app.use(cors());
@@ -21,16 +28,16 @@ app.options("*", cors());
 
 
 //middleware
-
+app.use('/api/v1/webhook', require('./routers/webhook'));
 app.use(bodyParser.json());
 app.use(morgan("tiny"));
 app.use('/public/uploads',express.static(__dirname + '/public/uploads'));
 app.use(express.static(path.join(__dirname, "dist")));
-app.use('api/v1/webhook',require("./routers/orders"));
-app.use(express.json());
 
-app.use(errorHandler);
+app.use(express.json());
 app.use(authJwt());
+app.use(errorHandler);
+
 
 app.use((req, res, next)=>{
   if(req.path=== '/favicon.ico'){
@@ -41,14 +48,8 @@ app.use((req, res, next)=>{
 
 app.use(morgan("combined*"));
 
-//route
-const categoriesRouter = require("./routers/categories");
-const ordersRouter = require("./routers/orders");
-const productsRouter = require("./routers/products");
-const usersRouter = require("./routers/users");
 
 
-const api = process.env.API_URL;
 
 
 

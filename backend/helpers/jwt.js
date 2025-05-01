@@ -22,6 +22,7 @@ const {expressjwt} = require('express-jwt'); // Correct import
       `${api}/favicon.ico`,
       `${api}/users/login`,
       `${api}/users/register`,
+      '/api/v1/webhook',
     ],
   });
 }

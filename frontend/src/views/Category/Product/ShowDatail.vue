@@ -20,17 +20,14 @@
               <span class="input-group-text">quantity</span>
             </div>
             <div class="col-6">
-              <input type="number" class="form-control"  v-model="quantity" />
+              <input type="number" class="form-control"  v-model="quantity" min="1"/>
             </div>
         </div>
           <div class="input-group col-md-3 col p-0" >
-           <!-- <button class="btn btn-primary confirm" style="overflow: auto;"
-       @click="checkout">
-       BUY NOW
-      </button>-->
+          
             <button class="btn" 
             id="add-to-cart-button" 
-            @click="addProductToCart">
+            @click="addProductToCart(product)">
               Add to Cart
             </button>
             </div>
@@ -66,7 +63,7 @@ export default {
       props: ["baseURL","categories","products"],
       
    methods: {
-    addProductToCart(){
+    addProductToCart(product){
      if(!this.token){
       this.$swal({
         text:"please login to add item",
@@ -77,8 +74,13 @@ export default {
     }
      //add to cart
      const CartStore=useCartStore();
-       CartStore.addToCart(this.product);
-       alert('Product added to cart!')
+     const qty = this.quantity > 0 ? this.quantity : 1;
+       CartStore.addToCart(product, qty);
+       this.$swal({
+             text:"Product added to cart successfully!",
+             icon:"success"
+              });
+      // alert('Product added to cart!')
     },
     checkout(){
       this.$router.push({name:'BillingAddress'})

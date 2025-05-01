@@ -2,7 +2,7 @@
   <div class="card img-fluid">
     <div class="embed-responsive embed-responsive-10px">
       <router-link :to="{ name: 'ShowDetails', params: { id: product.id } }">
-      <img :src="product.image" class="card-img-top" alt="..." />
+      <img :src="product.image" class="card-img-top" alt="product image" />
       </router-link>
     </div>
     <div class="card-body">
@@ -10,22 +10,57 @@
         <h5 class="card-title">{{ product.name.substring(0, 25) }}</h5>
       </router-link>
       <p style="color:blue-sky;" class="card-text text-wrap">₦{{ product.price }}</p>
-      <p style="font-weight: 900;" class="card-text text-wrap">BRAND:{{ product.brand.substring(0,10) }}</p>
+      <h6 style="font-weight: 900;" class="card-text text-wrap">BRAND:{{ product.brand.substring(0,10) }}</h6>
+      <div class="d-flex justify-content-between mt-3">
       <RouterLink
         :to="{ name: 'EditProduct', params: { id: product.id } }"
         v-show="$route.name == 'AdminProduct'"
       >
         <button class="btn btn-primary">Edit</button>
       </RouterLink>
+      <button class="btn btn-danger ml-2" @click="deleteProduct()" v-show="$route.name == 'AdminProduct'">
+            DELETE
+          </button>
+          </div>
     </div>
   </div>
 </template>
 
 <script>
+import axios from 'axios';
 export default {
   name: "ProductBox",
-  props: ["product"],
-  methods: {},
+  data(){
+    return{
+       baseURL:"https://royalgoods.onrender.com/api/v1/",
+     //baseURL: "http://localhost:3000/api/v1/",
+    }
+  },
+  props:["product"],
+  methods: {
+   async deleteProduct(){
+  if(!confirm('are you sure you want to delete this product?'))return;
+
+  try{
+    await axios.delete(`${this.baseURL}products/${this.product.id}`,{
+      headers:{Authorization:`Bearer ${localStorage.getItem("token")}`
+
+      }
+    });
+    this.$emit("product-deleted",this.product.id);
+    this.$swal({
+             text:"Product deleted successfully",
+             icon:"success"
+              });
+  }catch(err){
+    console.error('Error deleting product:', err)
+    this.$swal({
+             text:"Failed to delete product!",
+             icon:"error"
+              });
+  }
+}
+  },
 };
 </script>
 <style scoped>

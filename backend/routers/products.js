@@ -90,7 +90,7 @@ router.post("/", uploadOptions.single("image"), async (req, res) => {
   const file = req.file;
   if (!file) return res.status(400).send("no image in the request");
 
-  
+  const files = file.path.replace("/upload/", "/upload/w_800,h_800,q_auto,f_auto/");
 
  // const fileName = file.filename;
   // const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
@@ -99,7 +99,7 @@ router.post("/", uploadOptions.single("image"), async (req, res) => {
     name: req.body.name,
     discription: req.body.discription,
     richDiscription: req.body.richDiscription,
-    image:file.path.replace("/upload/", "/upload/w_800,h_800,q_auto,f_auto/"),  //`${basePath}${fileName}`, // "http://localhost:3000/public/uploads/1mage-2323232"
+    image: files, //`${basePath}${fileName}`, // "http://localhost:3000/public/uploads/1mage-2323232"
     brand: req.body.brand,
     price: req.body.price,
     category: req.body.category,

@@ -47,24 +47,25 @@ export default {
       .then((res) => {
         //update pinia store
         const authStore = useAuthStore();
-          authStore.login(res.data.token,);
+          authStore.login({
+            token:res.data.token,
+            email:res.data.user
+          });
 
            //update cart
            const cartStore=useCartStore();
           cartStore.loadCartForUser(authStore.userId)
+          this.$emit("fetchData")
 
           this.$router.push({ name: "home" });
 
-
-       // localStorage.setItem("token",res.data.token);
         this.$swal({
           text: "login successfully",
           icon: "success",
         });
-        this.$emit("fetchData")
-       // this.$router.push({ name: "home"});
       }).catch((err) => console.log("err", err));
-    },
+  }
+
   },
 mounted(){
   this.$emit('fetchData')
