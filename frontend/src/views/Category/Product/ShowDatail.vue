@@ -11,7 +11,7 @@
         <h4>{{ product.name }}</h4>
         <h6 class="category fst-italic">{{ category.name }}</h6>
         <h6 class="fw-bold">price {{ product.price }}</h6>
-        <p>
+        <p class="text-capitalize">
           {{ product.discription }}
         </p>
         <div class="d-flex flex-row justify-content-between">
@@ -32,7 +32,7 @@
             </button>
             </div>
           </div>
-        <div class="features pt-3">
+        <div class="features pt-3 text-capitalize">
           <h5><strong>features</strong></h5>
           <ul>
           <li style="white-space: pre-line;">{{ product.richDiscription }} </li>
@@ -90,9 +90,9 @@ export default {
       mounted() {
         
      this.id = this.$route.params.id;
-     this.product = this.products.find((product) => product.id == this.id);
+     this.product = this.products.find((product) => product?.id == this.id);
      this.category = this.categories.find(
-      (category) => category.id == this.product.category.id);
+      (category) => category.id == this.product.category?.id);
      this.token = localStorage.getItem("token");
       },
     

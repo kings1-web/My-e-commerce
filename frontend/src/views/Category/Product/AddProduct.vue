@@ -16,7 +16,7 @@
                       :value="category.id" >{{ category.name }}</option>
                      </select>
                     </div>
-                    <div class="form-group col-12">
+                    <div class="form-group col-12 text-capitalize">
                         <label>Name</label>
                         <input type="text" v-model="name" class="form-control">
                     </div>
@@ -41,7 +41,7 @@
                     </div>
                     <div class="form-group col-12">
                         <label>Price</label>
-                        <input type="number" v-model="price" class="form-control">
+                        <input type="text"  v-model="price" class="form-control">
                     </div>
                     <div class="form-group col-12">
                         <label>Count Instoct</label>

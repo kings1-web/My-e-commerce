@@ -11,9 +11,9 @@
     </div>
     <div class="card-body">
       <RouterLink :to="{ name: 'ListProduct', params: { id: category.id } }">
-        <h5 class="card-title">{{ category.name.substring(0, 25) }}</h5>
+        <h5 class="card-title text-capitalize">{{ category.name.substring(0, 25) }}</h5>
       </RouterLink>
-      <h6 class="card-text wrap">{{ category.icon.substring(0, 25) }}</h6>
+      <h6 class="card-text text-wrap text-capitalize text-break">{{ category.icon.substring(0, 25) }}</h6>
       <div class="d-flex justify-content-between mt-3">
       <RouterLink
         :to="{ name: 'EditCategory', params: { id: category.id } }"

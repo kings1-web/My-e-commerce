@@ -7,10 +7,10 @@
     </div>
     <div class="card-body">
       <router-link :to="{ name: 'ShowDetails', params: { id: product.id } }">
-        <h5 class="card-title">{{ product.name.substring(0, 25) }}</h5>
+        <h5 class="card-title text-capitalize">{{ product.name.substring(0, 25) }}</h5>
       </router-link>
       <p style="color:blue-sky;" class="card-text text-wrap">₦{{ product.price }}</p>
-      <h6 style="font-weight: 900;" class="card-text text-wrap">BRAND:{{ product.brand.substring(0,10) }}</h6>
+      <h6 style="font-weight: 900;" class="card-text text-wrap">BRAND:{{ product.brand.substring(0,15) }}</h6>
       <div class="d-flex justify-content-between mt-3">
       <RouterLink
         :to="{ name: 'EditProduct', params: { id: product.id } }"
