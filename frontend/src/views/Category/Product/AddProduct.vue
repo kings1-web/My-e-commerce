@@ -41,7 +41,7 @@
                     </div>
                     <div class="form-group col-12">
                         <label>Price</label>
-                        <input type="text"  v-model="price" class="form-control">
+                        <input type="number"  v-model="price" class="form-control">
                     </div>
                     <div class="form-group col-12">
                         <label>Count Instoct</label>

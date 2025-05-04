@@ -10,7 +10,7 @@
       <div class="col-md-6 col-12 pt-3 pt-md-0">
         <h4>{{ product.name }}</h4>
         <h6 class="category fst-italic">{{ category.name }}</h6>
-        <h6 class="fw-bold">price {{ product.price }}</h6>
+        <h6 class="fw-bold">price: {{ formatPrice(product.price) }}</h6>
         <p class="text-capitalize">
           {{ product.discription }}
         </p>
@@ -84,7 +84,15 @@ export default {
     },
     checkout(){
       this.$router.push({name:'BillingAddress'})
-    }
+    },
+
+    formatPrice(value){
+    return new Intl.NumberFormat('en-NG',{
+      style:'currency',
+      currency:'NGN',
+      maximumFractionDigits:2
+    }).format(value);
+  }
    
    },
       mounted() {

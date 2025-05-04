@@ -9,7 +9,7 @@
       <router-link :to="{ name: 'ShowDetails', params: { id: product.id } }">
         <h5 class="card-title text-capitalize">{{ product.name.substring(0, 25) }}</h5>
       </router-link>
-      <p style="color:blue-sky;" class="card-text text-wrap">₦{{ product.price }}</p>
+      <p style="color:blue-sky;" class="card-text text-wrap">{{ formatPrice(product.price) }}</p>
       <h6 style="font-weight: 900;" class="card-text text-wrap">BRAND:{{ product.brand.substring(0,15) }}</h6>
       <div class="d-flex justify-content-between mt-3">
       <RouterLink
@@ -38,6 +38,15 @@ export default {
   },
   props:["product"],
   methods: {
+
+    formatPrice(value){
+    return new Intl.NumberFormat('en-NG',{
+      style:'currency',
+      currency:'NGN',
+      maximumFractionDigits:2
+    }).format(value);
+  },
+
    async deleteProduct(){
   if(!confirm('are you sure you want to delete this product?'))return;
 
@@ -60,7 +69,9 @@ export default {
               });
   }
 }
+
   },
+  
 };
 </script>
 <style scoped>

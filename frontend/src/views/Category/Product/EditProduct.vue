@@ -69,7 +69,7 @@
             <div class="form-group">
               <label>price</label>
               <input
-                type="text" 
+                type="number" 
                 class="form-control"
                 v-model="product.price"
                 require
