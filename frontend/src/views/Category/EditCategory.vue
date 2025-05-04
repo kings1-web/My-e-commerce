@@ -8,7 +8,7 @@
        
         <div class="row">
             <div class="col-3"></div>
-            <div class="col-6">
+            <div class="col-12">
                 <form v-if="category">
                     <div class="form-group">
                         <label>Category Name</label>
@@ -84,11 +84,6 @@ import axios from 'axios'
             })
            }).catch(err => console.log('err', err))
                 
-            
-          
-        console.log(this.id)
-        console.log(this.category)
-        console.log(axios)
         
        
    

@@ -24,9 +24,13 @@
     
 <div  v-else>
     <div v-for="order in orders" :key="order.id" class="card mb-4 shadow-sm">
-        <div class="card-header bg-primary text-white d-flex justify-content-between">
-            <span>Order by:{{order.user?.name}} ({{order.user?.email}})</span>
+        <div class="card-header bg-primary text-white text-wrap d-flex justify-content-between">
+            <span>Order by:{{order.user?.name}}</span><span>({{order.user?.email}})</span>
             <span>Total:{{order.totalPrice}}</span>
+        </div>
+        <div class="card-header bg-secondary text-white text-wrap d-flex justify-content-between">
+            <span>Address:{{order.shippingAddress1}}</span><span>State:({{order.city}})</span>
+            <span>Tel:{{order.phone}}</span>
         </div>
         <div class="card-body">
             <h6>Purchase-Items:</h6>

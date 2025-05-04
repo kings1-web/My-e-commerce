@@ -35,14 +35,14 @@ import axios from 'axios';
     mounted(){
       this.id=this.$route.params.id;
        this.category=this.categories.find(category => category.id == this.id);
-        this.product=this.products.filter(product=>product.category.id == this.id)
+        this.product=this.products.filter(product=>product.category?.id == this.id)
         if(this.product.lenght == 0){
             this.msg =" = no product found"
         }else if(this.product.length == 1){
             this.msg =" = only 1 product found"
         }else{
             this.msg =this.product.length + " = products found"
-    console.log('id',this.id)
+    console.log('id:',this.id)
 
         }
     }

@@ -7,7 +7,7 @@
     </div>
     <div class="row">
       <div class="col-3"></div>
-      <div class="col-6">
+      <div class="col-12">
         <form class="row g-3 col-12 text-start py-4" v-if="product">
           <div class="form-group">
             <label>Category</label>
@@ -20,7 +20,7 @@
                 {{ category.name }}
               </option>
             </select>
-            <div class="form-group col-6">
+            <div class="form-group col-12">
               <label>name</label>
               <input
                 input="text"

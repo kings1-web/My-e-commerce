@@ -7,7 +7,7 @@
         </div>
         <div class="row">
             <div class="col-3"></div>
-            <div class="col-6">
+            <div class="col-12">
                 <form class="row g-3 col-12 text-start">
                     <div class="form-group">
                         <label>Category</label>
@@ -16,46 +16,46 @@
                       :value="category.id" >{{ category.name }}</option>
                      </select>
                     </div>
-                    <div class="form-group col-6">
+                    <div class="form-group col-12">
                         <label>Name</label>
                         <input type="text" v-model="name" class="form-control">
                     </div>
-                    <div class="form-group col-6">
+                    <div class="form-group col-12">
                         <label>Discription</label>
                         <input type="text" v-model="discription" class="form-control">
                     </div>
-                    <div class="form-group col-6">
+                    <div class="form-group col-12">
                         <label>Product features</label>
                         <textarea class="form-control" row="3" v-model.trim="richDiscription">02</textarea>
                     </div><br/>
-                    <div class="form-group col-6">
+                    <div class="form-group col-12">
                         <label>Image</label>
                         <input type="file"
                          ref="image" name="image"
                           @change="handleFileUpload"  
                           class="form-control-file">
                     </div>
-                    <div class="form-group col-6">
+                    <div class="form-group col-12">
                         <label>Affiliate link</label>
                         <input type="text" v-model="brand" class="form-control">
                     </div>
-                    <div class="form-group col-6">
+                    <div class="form-group col-12">
                         <label>Price</label>
                         <input type="number" v-model="price" class="form-control">
                     </div>
-                    <div class="form-group col-6">
+                    <div class="form-group col-12">
                         <label>Count Instoct</label>
                         <input type="number" v-model="countInStock" class="form-control">
                     </div>
-                    <div class="form-group col-6">
+                    <div class="form-group col-12">
                         <label>Rating</label>
                         <input type="number" v-model="rating" class="form-control">
                     </div>
-                    <div class="form-group col-6">
+                    <div class="form-group col-12">
                         <label>Reviews</label>
                         <input type="number" v-model="numReviews" class="form-control">
                     </div>
-                    <div class="form-group col-6">
+                    <div class="form-group col-12">
                         <label>Feature</label>
                         <input type="text" v-model="isFeature" class="form-control">
                     </div>
