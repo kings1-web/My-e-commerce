@@ -30,7 +30,7 @@
           </RouterLink>
           </h6>
           <p class="mb-0 fw-bold" id="iitem-price">
-            ₦ {{ item.price }} per unit
+             {{ formatPrice(item.price) }} per unit
           </p>
           <p class="m-0">
             Quantity:{{ item.quantity }}
@@ -55,7 +55,7 @@
        
       </div>
       <div class="total-cost pt-2 text-end">
-      <h5>Total: ₦{{ totalPrice }}</h5>
+      <h5>Total: {{ formatPrice(totalPrice) }}</h5>
       <button class="btn btn-primary confirm" style="overflow: auto;"
        @click="checkout">
        proceed for payment
@@ -103,6 +103,13 @@ export default {
   props: ["baseURL","cartCount"],
   methods: {
 
+    formatPrice(value){
+    return new Intl.NumberFormat('en-NG',{
+      style:'currency',
+      currency:'NGN',
+      maximumFractionDigits:2
+    }).format(value);
+  },
     
     checkout(){
       this.$router.push({name:'BillingAddress'})
