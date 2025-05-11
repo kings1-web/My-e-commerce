@@ -1,5 +1,5 @@
 <template>
-  <div class="card img-fluid">
+  <div class="card img-fluid product-card w-100">
     <div class="embed-responsive embed-responsive-10px">
       <router-link :to="{ name: 'ShowDetails', params: { id: product.id } }">
       <img :src="product.image" class="card-img-top" alt="product image" />
@@ -7,20 +7,20 @@
     </div>
     <div class="card-body">
       <router-link :to="{ name: 'ShowDetails', params: { id: product.id } }">
-        <h5 class="card-title text-capitalize">{{ product.name.substring(0, 25) }}</h5>
+        <h5 class="card-title">{{ product.name.substring(0, 20) }}</h5>
       </router-link>
-      <p style="color:blue-sky;" class="card-text text-wrap">{{ formatPrice(product.price) }}</p>
-      <h6 style="font-weight: 900;" class="card-text text-wrap">BRAND:{{ product.brand.substring(0,15) }}</h6>
-      <div class="d-flex justify-content-between mt-3">
-      <RouterLink
-        :to="{ name: 'EditProduct', params: { id: product.id } }"
-        v-show="$route.name == 'AdminProduct'"
-      >
-        <button class="btn btn-primary">Edit</button>
-      </RouterLink>
-      <button class="btn btn-danger ml-2" @click="deleteProduct()" v-show="$route.name == 'AdminProduct'">
-            DELETE
-          </button>
+      <p class="card-text price-text">{{ formatPrice(product.price) }}</p>
+            <p class="card-text brand-text">
+              <strong>Brand:</strong> {{ product.brand.length > 15 ? product.brand.substring(0, 15) : product.brand }}
+            </p>
+      <div v-if="$route.name === 'AdminProduct'" class="mt-3 d-flex justify-content-between">
+            <RouterLink :to="{ name: 'EditProduct', params: { id: product.id } }">
+              <button class="btn btn-primary btn-sm">Edit</button>
+            </RouterLink>
+            <RouterLink :to="{ name: 'GalleryUpload', params: { id: product.id } }">
+              <button class="btn btn-primary btn-sm">Upload</button>
+            </RouterLink>
+            <button class="btn btn-danger btn-sm" @click="deleteProduct(product.id)">Delete</button>
           </div>
     </div>
   </div>
@@ -74,27 +74,31 @@ export default {
   
 };
 </script>
+
 <style scoped>
-.card-img-top {
-  object-fit: cover;
+
+.product-card {
+  border: 1px solid #ddd;
+  transition: transform 0.2s ease;
+}
+.product-card:hover {
+  transform: scale(1.02);
+}
+.product-img {
   max-width: 100%;
-  max-height: 300px;
+  height: 200px;
+  object-fit: cover;
 }
-a {
+.price-text {
+  color: #444;
+  font-weight: 600;
+}
+.brand-text {
+  font-size: 0.9rem;
+  color: #444;
+}
+a{
   text-decoration: none;
-}
-.card-title {
-  color: #484848;
-}
-.card-title:hover {
-  color: orangered;
-}
-.card-body {
-  margin-bottom: -5px;
-  line-height: 0;
-}
-p #bg{
-  background:red;
-  font-size: 20px;
+  color:#000
 }
 </style>

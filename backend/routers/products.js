@@ -32,32 +32,7 @@ const storage = new CloudinaryStorage({
 
 const uploadOptions = multer({ storage });
 
-/*const FILE_TYPE_MAP = {
-  "image/png": "png",
-  "image/jpeg": "jpeg",
-  "image/jpg": "jpg",
-};
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const isValid = FILE_TYPE_MAP[file.mimetype];
-    let uploadError = new Error("invalid image type");
-
-    if (isValid) {
-      uploadError = null;
-    }
-
-    cb(uploadError, "public/uploads/");
-  },
-  filename: function (req, file, cb) {
-    const fileName = file.originalname.split(" ").join(" _ ");
-    const extension = FILE_TYPE_MAP[file.mimetype];
-    cb(null, `${fileName}-${Date.now()}.${extension}`);
-  },
-});
-
-
-const uploadOptions = multer({ storage: storage });*/
 
 router.get("/", async (req, res) => {
   //localhost:3000/api/v1/products?categories=12345,134567
@@ -151,7 +126,7 @@ router.put("/:id", uploadOptions.single("image"), async (req, res) => {
       countInStock: req.body.countInStock,
       rating: req.body.rating,
       numReviews: req.body.numReviews,
-      isFeature: req.body.isFeature,
+      isFeatured: req.body.isFeatured,
     },
     { new: true }
   );
@@ -194,13 +169,14 @@ router.get("/get/count", async (req, res) => {
 
 router.get("/get/featured/:count", async (req, res) => {
   count = req.params.count ? req.params.count : 0;
-  const products = await Product.find({ isFeature: true }).limit(+count);
+  const products = await Product.find({ isFeatured: true }).limit(+count);
 
   if (!products) {
     res.status(500).json({ success: false });
   }
   res.send(products);
 });
+
 
 router.put(
   "/gallery-images/:id",
@@ -209,14 +185,17 @@ router.put(
     if (!mongoose.isValidObjectId(req.params.id)) {
       return res.status(400).send("Invalid Product Id");
     }
+
     const files = req.files;
-    const imagesPaths = [];
-    const basepath = `${req.protocol}://${req.get("host")}/public/uploads`;
-    if (files) {
-      files.map((file) => {
-        imagesPaths.push(`${basepath}${file.filename}`);
+    let imagesPaths = [];
+
+    if (files && files.length > 0) {
+      imagesPaths = files.map((file) => {
+        // Apply the same transformation as the main image
+        return file.path.replace("/upload/", "/upload/w_800,h_800,q_auto,f_auto/");
       });
     }
+
     const product = await Product.findByIdAndUpdate(
       req.params.id,
       {
@@ -224,9 +203,12 @@ router.put(
       },
       { new: true }
     );
-    if (!product) return res.status(500).send("the gallery cannot be updated");
+
+    if (!product) return res.status(500).send("The gallery cannot be updated");
+
     res.send(product);
   }
 );
+
 
 module.exports = router;

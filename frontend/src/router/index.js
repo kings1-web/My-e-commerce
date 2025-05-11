@@ -20,6 +20,8 @@ import Failure from '@/views/payment/Failure.vue'
 import BillingAddress from '@/components/BillingAddress.vue'
 import { useAuthStore } from '@/stores/auth'
 import UserOrders from '@/views/UserOrders.vue'
+import GalleryUpload from '@/views/GalleryUpload.vue'
+import FeaturedCarousel from '@/components/FeaturedCarousel.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -34,6 +36,12 @@ const router = createRouter({
       path:'/category/show/:id?',
       name:'ListProduct',
       component:ListProduct
+    },
+    //gallery 
+    {
+      path:'/product/gallery/:id?',
+      name:'GalleryUpload',
+      component:GalleryUpload
     },
     {
       path: '/admin/category/add',
@@ -64,6 +72,11 @@ const router = createRouter({
       path: '/BillingAddress',
       name: 'BillingAddress',
       component:BillingAddress,
+    },
+    {
+      path: '/Featured',
+      name: 'Featured',
+      component:FeaturedCarousel,
     },
     //category edit
     {

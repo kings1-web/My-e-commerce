@@ -28,7 +28,6 @@ app.options("*", cors());
 
 
 //middleware
-app.use('/api/v1/webhook', require('./routers/webhook'));
 app.use(bodyParser.json());
 app.use(morgan("tiny"));
 app.use('/public/uploads',express.static(__dirname + '/public/uploads'));
@@ -46,7 +45,6 @@ app.use((req, res, next)=>{
   next();
 })
 
-app.use(morgan("combined*"));
 
 
 

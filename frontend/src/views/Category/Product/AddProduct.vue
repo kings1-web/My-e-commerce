@@ -36,7 +36,7 @@
                           class="form-control-file">
                     </div>
                     <div class="form-group col-12">
-                        <label>Affiliate link</label>
+                        <label>Brand</label>
                         <input type="text" v-model="brand" class="form-control">
                     </div>
                     <div class="form-group col-12">
@@ -57,7 +57,10 @@
                     </div>
                     <div class="form-group col-12">
                         <label>Feature</label>
-                        <input type="text" v-model="isFeature" class="form-control">
+                        <select v-model="isFeature" class="form-control">
+                            <option :value="true">Yes</option>
+                            <option :value="false">No</option>
+                        </select>
                     </div>
                     
                     <button type="button" class="btn btn-primary" @click="addProduct()">ADD PRODUCT</button>
@@ -86,7 +89,7 @@ export default{
         countInStock:null,
         rating:null,
         numReviews:null,
-        isFeature:null,
+        isFeature:false,
 
 
 
@@ -98,12 +101,12 @@ export default{
 
   methods:{
         handleFileUpload(event){
-    this.file=this.$refs.image.files[0];
-    console.log(this.file)
-
+    this.image=event.target.files[0];
+    console.log(this.image)
     },
+   
   async  addProduct(){
-        if(!this.file){
+        if(!this.image){
           this.$swal({
             text:"Select a file first",
             icon:"warning",
@@ -119,7 +122,7 @@ export default{
       formData.append("category",this.category)
       formData.append("discription",this.discription)
       formData.append("richDiscription",this.richDiscription)
-      formData.append('image',this.$refs.image.files[0]);
+      formData.append('image',this.image);
       formData.append("brand",this.brand)
       formData.append("price",this.price)
       formData.append("countInStock",this.countInStock)

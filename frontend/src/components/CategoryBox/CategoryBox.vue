@@ -1,5 +1,5 @@
 <template>
-  <div class="card img-fluid" style="m">
+  <div class="card product-card h-100  img-fluid">
     <div class="embed-responsive embed-responsive-10px">
       <RouterLink :to="{ name: 'ListProduct', params: { id: category.id } }">
       <img
@@ -13,7 +13,7 @@
       <RouterLink :to="{ name: 'ListProduct', params: { id: category.id } }">
         <h5 class="card-title text-capitalize">{{ category.name.substring(0, 25) }}</h5>
       </RouterLink>
-      <h6 class="card-text text-wrap text-capitalize text-break">{{ category.icon.substring(0, 25) }}</h6>
+      <h6 class="card-text text-capitalize">{{ category.icon.substring(0, 25) }}</h6>
       <div class="d-flex justify-content-between mt-3">
       <RouterLink
         :to="{ name: 'EditCategory', params: { id: category.id } }"
@@ -67,6 +67,13 @@ export default {
 </script>
 
 <style scope>
+.product-card {
+  border: 1px solid #ddd;
+  transition: transform 0.2s ease;
+}
+.product-card:hover {
+  transform: scale(1.02);
+}
 .card-img-top {
   object-fit: cover;
   max-width: 100%;

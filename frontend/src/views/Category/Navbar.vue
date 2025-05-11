@@ -8,11 +8,16 @@
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-    
-    <form class="d-flex" role="search">
-        <input class="form-control me-2" size="150" type="search" id="input-button" placeholder="Search products,category and brands" aria-label="Search"/>
-        <button class="btn btn-outline-success" id="search-button-navbar" type="submit"><i class="bi bi-search" style="color:white"></i></button>
-      </form>
+   
+      <form class="d-flex" role="search" onsubmit="handleSearch(event)">
+  <div class="position-relative w-100">
+    <input class="form-control ps-5" size="150" type="search" id="search-input"
+           placeholder="Search products, category and brands" aria-label="Search" />
+
+    <button type="submit" class="btn position-absolute top-50 start-0 translate-middle-y ms-2 p-0 border-0 bg-transparent">
+      <i class="bi bi-search" style="color: gray;"></i>
+    </button>
+  </div>
       <div id="cart" style="position:relative;color:white;padding-left:10px;">
             <span id="nav-cart-count">{{ cartCount }}</span>
             <RouterLink class="text-light" :to="{name: 'Cart'}">
@@ -20,7 +25,7 @@
             </RouterLink> 
            
           </div>
-
+</form>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item dropdown">

@@ -44,7 +44,8 @@
               <textarea
                 class="form-control"
                 row="3"
-                v-model="product.richDiscription"></textarea>
+                v-model="product.richDiscription"
+              ></textarea>
             </div>
             <div class="form-group">
               <label>update your file</label><br />
@@ -58,7 +59,7 @@
               />
             </div>
             <div class="form-group">
-              <label>Afflliate link</label>
+              <label>Brand</label>
               <input
                 type="text"
                 class="form-control"
@@ -69,7 +70,7 @@
             <div class="form-group">
               <label>price</label>
               <input
-                type="number" 
+                type="number"
                 class="form-control"
                 v-model="product.price"
                 require
@@ -102,20 +103,17 @@
                 require
               />
             </div>
-            <div class="form-group">
-              <label>isFeature</label>
-              <input
-                type="text"
-                class="form-control"
-                v-model="product.isFeature"
-                require
-              />
+            <div class="form-group col-12">
+              <label>Feature</label>
+              <select v-model="product.isFeatured" class="form-control">
+                <option :value="true">Yes</option>
+                <option :value="false">No</option>
+              </select>
             </div>
           </div>
           <button type="button" class="btn btn-primary" @click="EddProduct()">
             ADD PRODUCT
           </button>
-
         </form>
       </div>
       <div class="col-3"></div>
@@ -152,15 +150,15 @@ export default {
       formData.append("countInStock", this.product.countInStock);
       formData.append("rating", this.product.rating);
       formData.append("numReviews", this.product.numReviews);
-      formData.append("feature", this.product.feature);
+      formData.append("isFeatured", this.product.isFeatured);
 
       console.log("category", this.product.category.id);
 
       await axios
-        .put(`${this.baseURL}products/${this.id}`, formData,{
-          headers:{
-            Authorization:`Bearer ${localStorage.getItem('token')}`
-          }
+        .put(`${this.baseURL}products/${this.id}`, formData, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         })
         .then(() => {
           this.$emit("fetchData");
@@ -172,7 +170,6 @@ export default {
         })
         .catch((err) => console.log("err", err));
     },
-
   },
 
   mounted() {
