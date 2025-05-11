@@ -11,7 +11,7 @@
     </div>
     <div class="card-body">
       <RouterLink :to="{ name: 'ListProduct', params: { id: category.id } }">
-        <h5 class="card-title text-capitalize">{{ category.name.substring(0, 25) }}</h5>
+        <h6 class="card-title text-capitalize">{{ category.name.substring(0, 25) }}</h6>
       </RouterLink>
       <h6 class="card-text text-capitalize">{{ category.icon.substring(0, 25) }}</h6>
       <div class="d-flex justify-content-between mt-3">

@@ -1,21 +1,15 @@
 <template>
   <div class="container">
     <div class="row pt-5">
-      <!-- Optional spacing column, can be removed if not needed -->
-      <!-- <div class="col-md-1"></div> -->
-
-      <!-- Display image -->
+      <!-- Image Carousel -->
       <div id="productImageCarousel" class="carousel slide mb-4 col-md-4 col-12" data-bs-ride="carousel">
         <div class="carousel-inner">
-          <!-- Main image as first carousel item -->
-          <div class="carousel-item active">
-            <img :src="product.image" class="img-fluid" alt="Main Image" />
-          </div>
-          <!-- Loop through additional images -->
+          <!-- Loop through all images including main image -->
           <div
             class="carousel-item"
-            v-for="(img, index) in product.images"
+            v-for="(img, index) in allImages"
             :key="index"
+            :class="{ active: index === 0 }"
           >
             <img :src="img" class="img-fluid" alt="Product Image" />
           </div>
@@ -40,16 +34,14 @@
         </button>
       </div>
 
-      <!-- Display product details -->
+      <!-- Product Details -->
       <div class="col-md-6 col-12 pt-3 pt-md-0">
         <h4>{{ product.name }}</h4>
         <h6 class="category fst-italic">{{ category.name }}</h6>
         <h6 class="fw-bold">Price: {{ formatPrice(product.price) }}</h6>
-        <p class="text-capitalize">
-          {{ product.discription }}
-        </p>
+        <p class="text-capitalize">{{ product.discription }}</p>
 
-        <!-- Quantity and Add to Cart -->
+        <!-- Quantity & Add to Cart -->
         <div class="d-flex flex-row justify-content-between">
           <div class="input-group col-md-3 col p-0">
             <span class="input-group-text">Quantity</span>
@@ -89,7 +81,11 @@
 import { useCartStore } from '@/stores/CartStore';
 
 export default {
-  props: ['baseURL', 'categories', 'products'],
+  props: {
+    baseURL: String,
+    categories: Array,
+    products: Array
+  },
   data() {
     return {
       product: {},
@@ -97,6 +93,13 @@ export default {
       token: null,
       quantity: 1,
     };
+  },
+  computed: {
+    allImages() {
+      // Combine main image and additional images, filter out undefined/null
+      const images = [this.product.image, ...(this.product.images || [])];
+      return images.filter(Boolean);
+    }
   },
   methods: {
     addProductToCart(product) {
@@ -128,10 +131,10 @@ export default {
     },
   },
   mounted() {
-    this.id = this.$route.params.id;
-    this.product = this.products.find((product) => product && product.id == this.id) || {};
+    const id = this.$route.params.id;
+    this.product = this.products.find((p) => p && p.id == id) || {};
     this.category =
-      this.categories.find((category) => category.id == this.product.category?.id) || {};
+      this.categories.find((c) => c.id == this.product.category?.id) || {};
     this.token = localStorage.getItem('token');
   },
 };
@@ -152,3 +155,4 @@ export default {
   width: 100%;
 }
 </style>
+
