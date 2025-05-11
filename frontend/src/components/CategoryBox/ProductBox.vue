@@ -10,9 +10,9 @@
         <h5 class="card-title">{{ product.name.substring(0, 20) }}</h5>
       </router-link>
       <p class="card-text price-text">{{ formatPrice(product.price) }}</p>
-            <p class="card-text brand-text">
+            <h6 class="card-text brand-text">
               <strong>Brand:</strong> {{ product.brand.length > 15 ? product.brand.substring(0, 15) : product.brand }}
-            </p>
+            </h6>
       <div v-if="$route.name === 'AdminProduct'" class="mt-3 d-flex justify-content-between">
             <RouterLink :to="{ name: 'EditProduct', params: { id: product.id } }">
               <button class="btn btn-primary btn-sm">Edit</button>
