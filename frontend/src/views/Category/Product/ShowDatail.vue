@@ -136,6 +136,7 @@ export default {
     this.category =
       this.categories.find((c) => c.id == this.product.category?.id) || {};
     this.token = localStorage.getItem('token');
+     this.$emit("fetchData");
   },
 };
 </script>

@@ -111,7 +111,7 @@ computed:{
   min-height: 90vh;
 }
 .bg-cover {
-  background-size: 80% 80% !important;
+  background-size: 100% 100% !important;
 }
 #heading {
   font-weight: 400;
