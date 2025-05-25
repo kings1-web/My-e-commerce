@@ -43,18 +43,15 @@
 
         <!-- Quantity & Add to Cart -->
         <div class="d-flex flex-row justify-content-between">
-          <div class="input-group col-md-3 col p-0">
+          <div class="input-group">
             <span class="input-group-text">Quantity</span>
             <input
-              type="number"
-              class="form-control"
-              v-model.number="quantity"
-              :min="1"
-            />
+              type="number" class="form-control" v-model.number="quantity" :min="1" />
           </div>
-          <div class="input-group col-md-3 col p-0">
+          <div class="input-group">
             <button
               class="btn"
+              type="button"
               id="add-to-cart-button"
               @click="addProductToCart(product)"
             >
