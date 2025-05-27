@@ -83,7 +83,7 @@
     </div>
 
     <div style="z-index: 2;color:brown;font-size:60px;padding:25px" class="text-end fixed-bottom">
-      <i class="bi bi-whatsapp"><a href="https://wa.link/3pxzcs"></a></i>
+      <a href="https://wa.link/3pxzcs"><i class="bi bi-whatsapp"></i></a>
     </div>
   </div>
 </template>
