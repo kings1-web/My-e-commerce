@@ -27,18 +27,29 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const order = await Order.findById(req.params.id).sort({'dateOrdered':-1})
-  .populate('user', 'name')
-  .populate({
-    path: 'OrderItems', populate:{
-      path:'product', populate: 'category'}
-    });
+  try {
+    const order = await Order.findById(req.params.id)
+      .sort({ dateOrdered: -1 })
+      .populate('user', 'name')
+      .populate({
+        path: 'OrderItems',
+        populate: {
+          path: 'product',
+          populate: 'category',
+        },
+      });
 
-  if (!order) {
-    res.status(500).json({ success: false });
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    res.send(order);
+  } catch (err) {
+    console.error("Error fetching order:", err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
-  res.send(order);
 });
+
 // step 1:calculate total and create orderItem
 router.post('/', async (req, res) => {
   try {
@@ -191,23 +202,32 @@ router.delete("/:id", (req, res) => {
     });
   });
 
-  router.get("/get/userorders/:userid", async (req, res) => {
-    const userid = req.params.userid;
-   // console.log('user id:', userid)
-    const userOrderList = await Order.find({user:userid}).populate({
-      path:'orderItems',
-       populate:{
-        path:'product',
-        populate: 'category'
-        }
-      }).sort({'dateOrdered':-1});
-      console.log('user order:', userOrderList)
-  
-    if (!userOrderList) {
-      res.status(500).json({ success: false });
-    }
+  router.get("/get/userorders/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    const userOrderList = await Order.find({ user: userId })
+      .populate({
+        path: 'orderItems',
+        populate: {
+          path: 'product',
+          populate: 'category',
+        },
+      })
+      .sort({ dateOrdered: -1 });
+
+    if (!userOrderList || userOrderList.length === 0) {
+  return res.status(404).json({ success: false, message: 'No orders found' });
+}
+
+
     res.status(200).send(userOrderList);
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 
  /* router.post('/create-checkout-session', async(req, res, next)=>{
     const items = req.body.items;
