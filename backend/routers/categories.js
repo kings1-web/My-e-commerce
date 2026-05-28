@@ -14,7 +14,7 @@ cloudinary.config({
 });
 
 //MULTER CLOUDINARY STORAGE
-/*const storage = new CloudinaryStorage({
+const storage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: "products",
@@ -26,9 +26,9 @@ cloudinary.config({
       { quality: "auto" },
     ],
   },
-});*/
+});
 
-const storage = new CloudinaryStorage({
+/*const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
     return {
@@ -49,7 +49,7 @@ const storage = new CloudinaryStorage({
       ]
     };
   }
-});
+});*/
 
 const uploadOptions = multer({ storage });
 
