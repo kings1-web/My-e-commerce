@@ -1,5 +1,5 @@
 <template>
-    <div class="container mt-4">
+    <div class="container bg-dark text-white mt-4">
         <div class="row">
             <div class="col-12 text-center">
                 <h4>Add New Product</h4>

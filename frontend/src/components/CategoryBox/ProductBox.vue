@@ -1,104 +1,219 @@
 <template>
-  <div class="card img-fluid product-card w-100">
-    <div class="embed-responsive embed-responsive-10px">
-      <router-link :to="{ name: 'ShowDetails', params: { id: product.id } }">
-      <img :src="product.image" class="card-img-top" alt="product image" />
-      </router-link>
-    </div>
-    <div class="card-body">
-      <router-link :to="{ name: 'ShowDetails', params: { id: product.id } }">
-        <h6 class="card-title">{{ product.name.substring(0, 20) }}</h6>
-      </router-link>
-      <p class="card-text price-text">{{ formatPrice(product.price) }}</p>
-            <h6 class="card-text brand-text">
-              <strong>Brand:</strong> {{ product.brand.length > 15 ? product.brand.substring(0, 15) : product.brand }}
-            </h6>
-      <div v-if="$route.name === 'AdminProduct'" class="mt-3 d-flex justify-content-between">
-            <RouterLink :to="{ name: 'EditProduct', params: { id: product.id } }">
-              <button class="btn btn-primary btn-sm">Edit</button>
-            </RouterLink>
-            <RouterLink :to="{ name: 'GalleryUpload', params: { id: product.id } }">
-              <button class="btn btn-primary btn-sm">Upload</button>
-            </RouterLink>
-            <button class="btn btn-danger btn-sm" @click="deleteProduct(product.id)">Delete</button>
-          </div>
+  <div class="product-card">
+    <!-- IMAGE -->
+    <RouterLink :to="{ name: 'ShowDetails', params: { id: product.id } }">
+      <div class="image-wrapper">
+        <img
+          :src="product.image || fallbackImage"
+          alt="product image"
+        />
+      </div>
+    </RouterLink>
+
+    <!-- CONTENT -->
+    <div class="card-content">
+      <RouterLink :to="{ name: 'ShowDetails', params: { id: product.id } }">
+        <h5 class="title">
+          {{ product.name || 'No Name' }}
+        </h5>
+      </RouterLink>
+
+      <p class="price">
+        {{ formatPrice(product.price) }}
+      </p>
+
+      <p class="brand">
+        <strong>Brand:</strong>
+        {{ product.brand || 'N/A' }}
+      </p>
+
+      <!-- ACTIONS (ADMIN ONLY) -->
+      <div
+        v-if="$route.name === 'AdminProduct'"
+        class="actions"
+      >
+        <RouterLink :to="{ name: 'EditProduct', params: { id: product.id } }">
+          <button class="btn edit">Edit</button>
+        </RouterLink>
+
+        <RouterLink :to="{ name: 'GalleryUpload', params: { id: product.id } }">
+          <button class="btn upload">Upload</button>
+        </RouterLink>
+
+        <button class="btn delete" @click="deleteProduct">
+          Delete
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
+import axios from "axios";
+
 export default {
   name: "ProductBox",
-  data(){
-    return{
-       baseURL:"https://royalgoods.onrender.com/api/v1/",
-     //baseURL: "http://localhost:3000/api/v1/",
-    }
+  props: ["product"],
+
+  data() {
+    return {
+      baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1/" || "https://royalgoods.onrender.com/api/v1/",
+      fallbackImage: "https://via.placeholder.com/300x200?text=No+Image",
+    };
   },
-  props:["product"],
+
   methods: {
+    formatPrice(value) {
+      if (!value) return "₦0";
+      return new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: "NGN",
+        maximumFractionDigits: 2,
+      }).format(value);
+    },
 
-    formatPrice(value){
-    return new Intl.NumberFormat('en-NG',{
-      style:'currency',
-      currency:'NGN',
-      maximumFractionDigits:2
-    }).format(value);
-  },
+    async deleteProduct() {
+      if (!confirm("Are you sure you want to delete this product?")) return;
 
-   async deleteProduct(){
-  if(!confirm('are you sure you want to delete this product?'))return;
+      try {
+        await axios.delete(
+          `${this.baseURL}products/${this.product.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
 
-  try{
-    await axios.delete(`${this.baseURL}products/${this.product.id}`,{
-      headers:{Authorization:`Bearer ${localStorage.getItem("token")}`
+        this.$emit("product-deleted", this.product.id);
 
+        this.$swal({
+          text: "Product deleted successfully",
+          icon: "success",
+        });
+      } catch (err) {
+        console.error("Error deleting product:", err);
+
+        this.$swal({
+          text: "Failed to delete product!",
+          icon: "error",
+        });
       }
-    });
-    this.$emit("product-deleted",this.product.id);
-    this.$swal({
-             text:"Product deleted successfully",
-             icon:"success"
-              });
-  }catch(err){
-    console.error('Error deleting product:', err)
-    this.$swal({
-             text:"Failed to delete product!",
-             icon:"error"
-              });
-  }
-}
-
+    },
   },
-  
 };
 </script>
 
 <style scoped>
-
 .product-card {
-  border: 1px solid #ddd;
-  transition: transform 0.2s ease;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
+
 .product-card:hover {
-  transform: scale(1.02);
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
-.product-img {
-  max-width: 100%;
+
+/* IMAGE */
+.image-wrapper {
+  width: 100%;
   height: 200px;
+  overflow: hidden;
+}
+
+.image-wrapper img {
+  
+  height: 100%;
   object-fit: cover;
+  transition: transform 0.4s ease;
 }
-.price-text {
-  color: #444;
+
+.image-wrapper:hover img {
+  transform: scale(1.1);
+}
+
+/* CONTENT */
+.card-content {
+  padding: 15px;
+}
+
+.title {
+  font-size: 15px;
   font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.brand-text {
-  font-size: 0.9rem;
-  color: #444;
+
+.price {
+  color: #111;
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 6px;
 }
-a{
+
+.brand {
+  font-size: 13px;
+  color: #777;
+  margin-bottom: 12px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ACTION BUTTONS */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.btn {
+  flex: 1;
+  border: none;
+  padding: 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn.edit {
+  background: #007bff;
+  color: white;
+}
+
+.btn.edit:hover {
+  background: #0056b3;
+}
+
+.btn.upload {
+  background: #6c757d;
+  color: white;
+}
+
+.btn.upload:hover {
+  background: #545b62;
+}
+
+.btn.delete {
+  background: #dc3545;
+  color: white;
+}
+
+.btn.delete:hover {
+  background: #a71d2a;
+}
+
+a {
   text-decoration: none;
-  color:#000
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container bg-dark text-white">
     <div class="row">
       <div class="text-center">
         <h3>add category</h3>
@@ -40,16 +40,7 @@
             />
           </div>
         </div>
-        <div class="form-group">
-          <label for="exampleColorInput" class="form-label">Color picker</label>
-          <input
-            type="color"
-            class="form-control form-control-color"
-            id="exampleColorInput"
-            value="#563d7c"
-            title="Choose your color"
-          />
-        </div>
+        
         <button type="button" class="btn btn-primary mb-3" @click="addCategory">
           submit
         </button>

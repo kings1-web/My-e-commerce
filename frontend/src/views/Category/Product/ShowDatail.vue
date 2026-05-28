@@ -42,11 +42,11 @@
         <p class="text-capitalize">{{ product.discription }}</p>
 
         <!-- Quantity & Add to Cart -->
-        <div class="d-flex flex-row justify-content-between">
+        <div class="mt-3 d-flex justify-content-between">
           <div class="input-group">
             <span class="input-group-text">Quantity</span>
             <input
-              type="number" class="form-control" v-model.number="quantity" :min="1" />
+              type="number" class="form-control w-20" v-model.number="quantity" :min="1" />
           </div>
           <div class="input-group">
             <button

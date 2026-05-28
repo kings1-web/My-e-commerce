@@ -16,7 +16,7 @@ cloudinary.config({
 });
 
 //MULTER CLOUDINARY STORAGE
-const storage = new CloudinaryStorage({
+/*const storage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: "products",
@@ -28,6 +28,29 @@ const storage = new CloudinaryStorage({
       { quality: "auto" },
     ],
   },
+});*/
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
+    return {
+      folder: "products",
+      public_id: `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+
+      transformation: [
+        {
+          width: 800,
+          height: 800,
+          crop: "pad",    
+          background:"white"    
+        },
+        {
+          fetch_format: "auto",
+          quality: "auto"
+        }
+      ]
+    };
+  }
 });
 
 const uploadOptions = multer({ storage });
@@ -67,8 +90,7 @@ router.post("/", uploadOptions.single("image"), async (req, res) => {
 
   const files = file.path.replace("/upload/", "/upload/w_800,h_800,q_auto,f_auto/");
 
- // const fileName = file.filename;
-  // const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
+ 
 
   let product = new Product({
     name: req.body.name,
@@ -107,8 +129,7 @@ router.put("/:id", uploadOptions.single("image"), async (req, res) => {
   let imagepath=product.image;
 
   if (file) {
-    //const fileName = file.filename;
-    //const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
+   
    imagepath=file.path.replace("/upload/", "/upload/w_800,h_800,q_auto,f_auto/");   //`${basePath}${fileName}`;
   }
 
@@ -191,7 +212,6 @@ router.put(
 
     if (files && files.length > 0) {
       imagesPaths = files.map((file) => {
-        // Apply the same transformation as the main image
         return file.path.replace("/upload/", "/upload/w_800,h_800,q_auto,f_auto/");
       });
     }

@@ -14,7 +14,6 @@ import SignUp from '@/views/SignUp.vue'
 import Login from '@/views/Login.vue'
 import Cart from '@/views/Cart.vue'
 import Page from '@/views/Category/Page.vue'
-import CheckOut from '@/views/CheckOut.vue'
 import Success from '@/views/payment/Success.vue'
 import Failure from '@/views/payment/Failure.vue'
 import BillingAddress from '@/components/BillingAddress.vue'
@@ -128,11 +127,7 @@ const router = createRouter({
       name:'PaymentFailure',
       component:Failure
     },
-    {
-      path:'/checkout',
-      name:'CheckOut',
-      component:CheckOut
-    },
+   
     
     {
       path:'/:pathMatch(.*)*',

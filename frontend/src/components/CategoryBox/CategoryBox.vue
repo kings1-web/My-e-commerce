@@ -1,86 +1,179 @@
 <template>
-  <div class="card product-card h-100  img-fluid">
-    <div class="embed-responsive embed-responsive-10px">
-      <RouterLink :to="{ name: 'ListProduct', params: { id: category.id } }">
-      <img
-        :src="category.image"
-        class="card-img-top"
-        alt="category images"
-      />
+  <div class="product-card">
+    <!-- IMAGE -->
+    <RouterLink :to="{ name: 'ListProduct', params: { id: category.id } }">
+      <div class="image-wrapper">
+        <img
+          :src="category.image || fallbackImage"
+          alt="category image"
+        />
+      </div>
     </RouterLink>
-    </div>
-    <div class="card-body">
+
+    <!-- CONTENT -->
+    <div class="card-content">
       <RouterLink :to="{ name: 'ListProduct', params: { id: category.id } }">
-        <h6 class="card-title text-capitalize">{{ category.name.substring(0, 25) }}</h6>
+        <h5 class="title">
+          {{ category.name || 'No Name' }}
+        </h5>
       </RouterLink>
-      <h6 class="card-text text-capitalize">{{ category.icon.substring(0, 25) }}</h6>
-      <div class="d-flex justify-content-between mt-3">
-      <RouterLink
-        :to="{ name: 'EditCategory', params: { id: category.id } }"
-        v-show="$route.name == 'Category'"
+
+      <p class="desc">
+        {{ category.icon || 'No description' }}
+      </p>
+
+      <!-- ACTIONS -->
+      <div
+        class="actions"
+        v-if="$route.name === 'Category'"
       >
-        <button class="btn btn-primary">Edit</button>
-      </RouterLink>
-      <button class="btn btn-danger ml-2" @click="deleteCategory()" v-show="$route.name == 'Category'">
-            DELETE
-          </button>
-          </div>
+        <RouterLink :to="{ name: 'EditCategory', params: { id: category.id } }">
+          <button class="btn edit">Edit</button>
+        </RouterLink>
+
+        <button class="btn delete" @click="deleteCategory">
+          Delete
+        </button>
+      </div>
     </div>
   </div>
 </template>
+
 <script>
-import axios from 'axios';
+import axios from "axios";
+
 export default {
   name: "CategoryBox",
-  data(){
-    return{
-       baseURL:"https://royalgoods.onrender.com/api/v1/",
-     //baseURL: "http://localhost:3000/api/v1/",
-    }
-  },
   props: ["category"],
+
+  data() {
+    return {
+      baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1/" || "https://royalgoods.onrender.com/api/v1/",
+      fallbackImage: "https://via.placeholder.com/300x200?text=No+Image",
+    };
+  },
+
   methods: {
-    async deleteCategory(){
-  if(!confirm('are you sure you want to delete this category?'))return;
+    async deleteCategory() {
+      if (!confirm("Are you sure you want to delete this category?")) return;
 
-  try{
-    await axios.delete(`${this.baseURL}categories/${this.category.id}`,{
-      headers:{Authorization:`Bearer ${localStorage.getItem("token")}`
+      try {
+        await axios.delete(
+          `${this.baseURL}categories/${this.category.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
 
+        // notify parent
+        this.$emit("category-deleted", this.category.id);
+
+        // success alert
+        this.$swal({
+          text: "Category deleted successfully",
+          icon: "success",
+        });
+      } catch (err) {
+        console.error("Error deleting category:", err);
+
+        this.$swal({
+          text: "Failed to delete category!",
+          icon: "error",
+        });
       }
-    });
-    this.$emit("category-deleted",this.category.id);
-    this.$swal({
-             text:"category deleted successfully",
-             icon:"success"
-              });
-  }catch(err){
-    console.error('Error deleting category:', err)
-    this.$swal({
-             text:"Failed to delete category!",
-             icon:"error"
-              });
-  }
-}
+    },
   },
 };
 </script>
 
-<style scope>
+<style scoped>
 .product-card {
-  border: 1px solid #ddd;
-  transition: transform 0.2s ease;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
+
 .product-card:hover {
-  transform: scale(1.02);
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
-.card-img-top {
+
+/* IMAGE */
+.image-wrapper {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+}
+
+.image-wrapper img {
+  height: 100%;
   object-fit: cover;
-  max-width: 100%;
-  max-height: 300px;
+  transition: transform 0.4s ease;
 }
-.card-body {
-  margin-bottom: -5px;
-  line-height: 0;
+
+.image-wrapper:hover img {
+  transform: scale(1.1);
+}
+
+/* CONTENT */
+.card-content {
+  padding: 15px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.desc {
+  font-size: 13px;
+  color: #777;
+  margin-bottom: 12px;
+
+  height: 35px;
+  overflow: hidden;
+}
+
+/* BUTTONS */
+.actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.btn {
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn.edit {
+  background: #007bff;
+  color: white;
+}
+
+.btn.edit:hover {
+  background: #0056b3;
+}
+
+.btn.delete {
+  background: #dc3545;
+  color: white;
+}
+
+.btn.delete:hover {
+  background: #a71d2a;
 }
 </style>

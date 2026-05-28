@@ -14,7 +14,7 @@ cloudinary.config({
 });
 
 //MULTER CLOUDINARY STORAGE
-const storage = new CloudinaryStorage({
+/*const storage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: "products",
@@ -26,34 +26,33 @@ const storage = new CloudinaryStorage({
       { quality: "auto" },
     ],
   },
+});*/
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
+    return {
+      folder: "products",
+      public_id: `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+
+      transformation: [
+        {
+          width: 800,
+          height: 800,
+          crop: "fill",      // 🔥 forces same size
+          gravity: "auto"    // 🔥 smart cropping (focus on object)
+        },
+        {
+          fetch_format: "auto",
+          quality: "auto"
+        }
+      ]
+    };
+  }
 });
 
 const uploadOptions = multer({ storage });
-/*const FILE_TYPE_MAP = {
-  "image/png": "png",
-  "image/jpeg": "jpeg",
-  "image/jpg": "jpg",
-};
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const isValid = FILE_TYPE_MAP[file.mimetype];
-    let uploadError = new Error("invalid image type");
-
-    if (isValid) {
-      uploadError = null;
-    }
-
-    cb(uploadError, "public/uploads/");
-  },
-  filename: function (req, file, cb) {
-    const fileName = file.originalname.split(" ").join(" _ ");
-    const extension = FILE_TYPE_MAP[file.mimetype];
-    cb(null, `${fileName}-${Date.now()}.${extension}`);
-  },
-});
-
-const uploadOptions = multer({ storage: storage });*/
 
 router.get("/", async (req, res) => {
   const categoryList = await Category.find();
@@ -80,8 +79,7 @@ router.post("/", uploadOptions.single("image"), async (req, res) => {
   const file = req.file;
   if (!file) return res.status(400).send("no image in the request");
 
-  //const fileName = file.filename;
-  //const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
+  
 
   let category = new Category({
     name: req.body.name,
@@ -108,8 +106,7 @@ router.put("/:id", uploadOptions.single("image"), async (req, res) => {
   
 
   if (file) {
-   // const fileName = file.filename;
-   // const basePath = `${req.protocol}://${req.get("host")}/public/uploads/`;
+   
     imagepath=file.path.replace("/upload/", "/upload/w_800,h_800,q_auto,f_auto/")  //`${basePath}${fileName}`;
   } 
 

@@ -4,8 +4,6 @@ const express = require("express");
 const { OrderItem } = require("../models/order-item");
 const router = express.Router();
 require("dotenv/config");
-//const Stripe=require('stripe')(process.env.STRIPE_SECRET_KEY);
-//const baseURL="http://localhost:5173"
 const baseURL="";
 
 
@@ -229,146 +227,50 @@ router.delete("/:id", (req, res) => {
 });
 
 
- /* router.post('/create-checkout-session', async(req, res, next)=>{
-    const items = req.body.items;
-console.log('Items:',items)
-
-    const address = req.body.address;
-console.log('Address:',address)
-    
-
-    const lineItems = items.map((item)=>({
-      price_data:{
-        currency:'NGN',
-        product_data:{
-          name:item.name,
-         // images:[item.images],
-        },
-        unit_amount:item.unit_price*100,
-      },
-      quantity:item.quantity,
-    }))
-    Stripe.checkout.sessions.create({
-    payment_method_types:['card'],
-    line_items:lineItems,
-    mode:'payment',
-    success_url:'https://kings-ecommerce.onrender.com/payment/success?session_id={CHECKOUT_SESSION_ID}',
-    cancel_url:'https://kings-ecommerce.onrender.com/payment/failure',
-     metadata:{
-      items:JSON.stringify(items),
-      address:JSON.stringify(address)
-     }
-    }).then((session)=>res.json({sessionId:session.id, url:session.url}))
-    .catch(error=>{
-     console.error(error);
-     res.status(500).json({message: 'Stripe session failed'});
-    });
-    })*/
-    
-  /* const orderItemIds = Promise.all(items.map(async(item)=>{
-      const newOrderItem = new OrderItem({
-        quantity: item.quantity,
-        product:item.id
-      });
-      //const savedItem = await newOrderItem.save()
-     // return savedItem.id;
-    }))
-   const orderItemsIdsResolved = await orderItemIds;
-
-    const totalPrices =await Promise.all(orderItemsIdsResolved.map(async(_id)=>{
-      const orderItem = await OrderItem.findById(_id).populate('product', 'price');
-      return orderItem.product.price * orderItem.quantity;
-    }));
-    console.log('price1:',totalPrices)
-
-    const totalPrice = totalPrices.reduce((acc, val)=> acc + val, 0)
-    console.log('price:',totalPrice)
-
-    let order = new Order({
-      orderItems:orderItemsIdsResolved,
-      shippingAddress1:address.shippingAddress1,
-      shippingAddress2:address.shippingAddress2 || '',
-      city:address.city,
-      zip:address.zip,
-      country:address.country,
-      phone:address.phone,
-      user:address.userId,
-      totalPrice:totalPrice,
-      status:'pending',
-    
-    });
-    console.log('order:',order)
-   // order = await order.save();
-  if (!order) 
-    return res.status(400).send("the order cannot be created");
-  res.send(order);
-
-//res.json({sessionId:session.id})
-})*/
- 
-
-/*router.post('/webhook',express.raw({type:'application/json'}), async(req, res)=>{
-  console.log('webhook triggered')
-  const sig=req.headers['stripe-signature'];
-
-  let event;
-
-  try{
-    event = Stripe.webhook.constructEvent(req.body, sig, process.env.STRIPE_WEB_SECRET);
-  }catch (err){
-    console.error('webhook signature error:', err.message);
-    return res.status(400).send('webhook Error: ${err.message}');
-  }
-
-    if(event.type==='checkout.session.completed'){
-      const session=event.data.object;
-      const address=JSON.parse(session.metadata.address);
-      const cartItems=JSON.parse(session.metadata.items);
-
-       Promise.all(cartItems.map(item=>{
-        const newOrderItem = OrderItem({
+router.post('/cod', async (req, res) => {
+  try {
+    const orderItemsIds = await Promise.all(
+      req.body.orderItems.map(async (item) => {
+        const newOrderItem = new OrderItem({
           quantity: item.quantity,
-          prodiuct:item.product._id
+          product: item.product._id || item._id,
         });
-        return newOrderItem.save();
-      }))
-      .then(async orderItems=>{
-        const orderItemsIds = orderItems.map(item=>item._id);
 
-        let order = new Order({
-        orderItems:orderItemsIds,
-        shippingAddress1:address.address1,
-        shippingAddress2:address.address2 || '',
-        city:address.city,
-        zip:address.zip,
-        country:address.country,
-        phone:address.phone,
-        user:address.userId,
-        totalPrice:session.unit_amount/100,
-        status:'pending',
-      });
-      order = await order.save();
-      if (!order) 
-        return res.status(400).send("the order cannot be created");
-      res.send(order)
-      console.log('check:', order)
+        return (await newOrderItem.save())._id;
       })
-  .then(()=>res.status(200).send('Order created successfully'))
-  .catch(err=>{
-    console.error('Order creation failed:',err);
-    res.status(500).send('failed to save order');
-  });
-}else{
-  res.status(200).send('webhook recieved');
-}
-});*/
+    );
 
-  
+    const totalPrices = await Promise.all(
+      orderItemsIds.map(async (orderItemId) => {
+        const orderItem = await OrderItem.findById(orderItemId).populate("product");
+        return orderItem.product.price * orderItem.quantity;
+      })
+    );
 
-/*.then((session)=>res.json({sessionId:session.id, url:session.url}))
-       .catch(error=>{
-        console.error(error);
-        res.status(500).json({message: 'Stripe session failed'});
-       });*/
+    const totalPrice = totalPrices.reduce((a, b) => a + b, 0);
+
+    const order = new Order({
+      orderItems: orderItemsIds,
+      shippingAddress1: req.body.shippingAddress1,
+      shippingAddress2: req.body.shippingAddress2,
+      city: req.body.city,
+      zip: req.body.zip,
+      country: req.body.country,
+      phone: req.body.phone,
+      user: req.body.user,
+      totalPrice,
+      status: "pending", // 👈 IMPORTANT (not paid yet)
+    });
+
+    const savedOrder = await order.save();
+
+    res.json({ success: true, order: savedOrder });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "COD order failed" });
+  }
+});
+
 
 module.exports = router;

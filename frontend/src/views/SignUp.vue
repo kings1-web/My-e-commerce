@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="bg-dark text-white">
     <div class="row">
       <div class="col-12 text-center pt-3">
         <!--  display logo -->

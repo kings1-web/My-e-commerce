@@ -1,5 +1,5 @@
 <template>
-    <div style="text-align: center; position: relative; left:26%; margin-top: 60px;">
+    <div style="background-color: black;color: aliceblue; position: relative; justify-items: center;">
         <form  class="row g-3 col-6 text-start">
 <h3>Billing Address</h3>
 <div class="col-12">
@@ -39,7 +39,10 @@
   </div>
  
 <div class="col-12">
-  <button type="button" class="btn btn-primary" @click="goToCheckOut">Place Order</button>
+  <button type="button" class="btn btn-primary" @click="goToCheckOut('paystack')">Pay Now</button>
+</div>
+<div class="col-12">
+  <button type="button" class="btn btn-primary" @click="goToCheckOut('cod')">Pay On delievery</button>
 </div>
 </form>
     </div>
@@ -76,7 +79,7 @@ export default {
     },
   },
   methods: {
-    async goToCheckOut() {
+    async goToCheckOut(method) {
       if (!this.cart.length) {
         this.$swal({
              text:"Cart is empty!",
@@ -85,6 +88,10 @@ export default {
        // alert("Cart is empty");
         return;
       }
+
+       if (method === 'cod') {
+    return this.placeCODOrder(); // 👈 NEW
+       }
 
       // Step 1: Create order
       const res = await fetch(`${this.baseURL}orders/`, {
@@ -178,6 +185,49 @@ export default {
        // alert('Server error during verification.');
       }
     },
+
+    async placeCODOrder() {
+  try {
+    const res = await fetch(`${this.baseURL}orders/cod`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        orderItems: this.cart,
+        shippingAddress1: this.address.shippingAddress1,
+        shippingAddress2: this.address.shippingAddress2,
+        city: this.address.city,
+        zip: this.address.zip,
+        country: this.address.country,
+        phone: this.address.phone,
+        user: this.address.user,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      this.$swal({
+        text: "Order placed! Pay on delivery.",
+        icon: "success"
+      });
+
+      const cartStore = useCartStore();
+      cartStore.clearCart();
+
+      this.$router.push({ name: 'home' });
+    }
+  } catch (err) {
+    console.error(err);
+    this.$swal({
+      text: "Error placing COD order",
+      icon: "error"
+    });
+  }
+},
+
   },
 };
 </script>

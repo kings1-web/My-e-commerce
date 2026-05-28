@@ -1,73 +1,129 @@
 <template>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <RouterLink
+        class="navbar-brand"
+        style="color: orangered"
+        :to="{ name: 'home' }"
+      >
+        ROYAL-GOODS
+      </RouterLink>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
- <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <div class="container-fluid">
-    <RouterLink class="navbar-brand" style="color:orangered" :to="{name:'home' }">
-      ROYAL-GOODS
-    </RouterLink>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-   
-      <form class="d-flex" role="search" onsubmit="handleSearch(event)">
-  <div class="position-relative w-100">
-    <input class="form-control ps-5" size="150" type="search" id="search-input"
-           placeholder="Search products, category and brands" aria-label="Search" />
+      <form class="d-flex" role="search" @submit.prevent="handleSearch">
+        <div class="position-relative w-100">
+          <input
+            class="form-control ps-5"
+            size="150"
+            type="search"
+            id="search-input"
+            placeholder="Search products, category and brands"
+            aria-label="Search"
+          />
 
-    <button type="submit" class="btn position-absolute top-50 start-0 translate-middle-y ms-2 p-0 border-0 bg-transparent">
-      <i class="bi bi-search" style="color: gray;"></i>
-    </button>
-  </div>
-      <div id="cart" style="position:relative;color:white;padding-left:10px;">
-            <span id="nav-cart-count">{{ cartCount }}</span>
-            <RouterLink class="text-light" :to="{name: 'Cart'}">
-              <i class="bi bi-cart4" style="font-size:20px;"></i>
-            </RouterLink> 
-           
-          </div>
-</form>
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle text-light" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Browse
-          </a>
-          <ul class="dropdown-menu">
-            <li><RouterLink class="dropdown-item" :to="{name:'home'}">
-              Home
-            </RouterLink></li>
-            <li><RouterLink class="dropdown-item" :to="{name:'UserOrders'}">
-              Orders
-            </RouterLink></li>
-            <li><RouterLink class="dropdown-item" :to="{name:'Admin'}">
-              AdminPanel
-            </RouterLink></li>
-          </ul>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle text-light" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-          
-            Account
-          </a>
-          <ul class="dropdown-menu">
-            <li><RouterLink v-if="!token" class="dropdown-item" :to="{name:'SignUp'}">
-              SignUp
-            </RouterLink></li>
-            <li><RouterLink v-if="!token" class="dropdown-item" :to="{name:'Login'}">
-              Sign In
-            </RouterLink></li>
-            <li><a  v-if="token" class="dropdown-item" href="#" @click="logout">
-              Sign Out
-            </a></li>
-          </ul>
-        </li>
-       
-      </ul>
+          <button
+            type="submit"
+            class="btn position-absolute top-50 start-0 translate-middle-y ms-2 p-0 border-0 bg-transparent"
+          >
+            <i class="bi bi-search" style="color: gray"></i>
+          </button>
+        </div>
+      </form>
+      <div
+        id="cart"
+        style="position: relative; color: white; padding-left: 10px"
+      >
+        <span id="nav-cart-count">{{ cartCount }}</span>
+        <RouterLink class="text-light" :to="{ name: 'Cart' }">
+          <i class="bi bi-cart4" style="font-size: 20px"></i>
+        </RouterLink>
+      </div>
+
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle text-light"
+              href="#"
+              role="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              Browse
+            </a>
+            <ul class="dropdown-menu">
+              <li>
+                <RouterLink class="dropdown-item" :to="{ name: 'home' }">
+                  Home
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink class="dropdown-item" :to="{ name: 'UserOrders' }">
+                  Orders
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink class="dropdown-item" :to="{ name: 'Admin' }">
+                  AdminPanel
+                </RouterLink>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle text-light"
+              href="#"
+              role="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              Account
+            </a>
+            <ul class="dropdown-menu">
+              <li>
+                <RouterLink
+                  v-if="!isLoggedIn"
+                  class="dropdown-item"
+                  :to="{ name: 'SignUp' }"
+                >
+                  SignUp
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink
+                  v-if="!isLoggedIn"
+                  class="dropdown-item"
+                  :to="{ name: 'Login' }"
+                >
+                  Sign In
+                </RouterLink>
+              </li>
+              <li>
+                <a
+                  v-if="isLoggedIn"
+                  class="dropdown-item"
+                  href="#"
+                  @click="logout"
+                >
+                  Sign Out
+                </a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
     </div>
-    
-  </div>
-</nav>
-
+  </nav>
 </template>
 
 <script>
@@ -76,60 +132,65 @@ import { useCartStore } from "@/stores/CartStore";
 import { mapState } from "pinia";
 export default {
   name: "Navbar",
-  data() {
-    return{
-      token:null,
-    }
-  },
-  methods:{
-    logout(){
-      localStorage.removeItem('token');
-      localStorage.removeItem('userId');
-      localStorage.removeItem('isAdmin');
-      this.token=null
+  
+  methods: {
+    handleSearch() {
+      const input = document.getElementById("search-input").value;
+      console.log(input);
+
+      // Example route
+      this.$router.push({ name: "Search", query: { q: input } });
+    },
+
+    logout() {
+      const authStore = useAuthStore();
+      authStore.logout(); // ✅ now exists
+
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("isAdmin");
+      this.token = null;
       this.$swal({
-        text:"logged out successfully, visit again",
-        icon:"success"
-      })
+        text: "logged out successfully, visit again",
+        icon: "success",
+      });
       const cartStore = useCartStore();
-        cartStore.resetCart();
+      cartStore.resetCart();
       this.$router.push({ name: "home" });
-      this.$emit("fetchData")
+      this.$emit("fetchData");
     },
   },
-  computed:{
-    ...mapState(useCartStore,['cartCount'])
+  computed: {
+    ...mapState(useCartStore, ["cartCount"]),
+    ...mapState(useAuthStore, ["token", "isLoggedIn"]),
   },
   mounted() {
-  this.$emit('fetchData')
-    this.$emit('updateCart')
-    this.token = localStorage.getItem("token");
-
+    this.$emit("fetchData");
+    this.$emit("updateCart");
   },
- 
 };
 </script>
 <style scoped>
-#search-button-navbar{
-  background-color:red;
-  border-color:orangered ;
+#search-button-navbar {
+  background-color: red;
+  border-color: orangered;
   border-top-right-radius: 2px;
   border-bottom-right-radius: 2px;
 }
-#input-button{
-  border-color: red ;
+#input-button {
+  border-color: red;
 }
-#nav-cart-count{
-  background-color:red;
-  color:white;
-  border-radius:50%;
-  height:15px;
-  width:15px;
-  font-size:15px;
-  align-items:center;
-  display:flex;
-  justify-content:center;
-  position:absolute;
-  margin-left:10px
+#nav-cart-count {
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  height: 15px;
+  width: 15px;
+  font-size: 15px;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  position: absolute;
+  margin-left: 10px;
 }
 </style>

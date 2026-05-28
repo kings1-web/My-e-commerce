@@ -1,16 +1,31 @@
 <template>
   <div id="home">
-    <div id="background-div" class="page-holder bg-cover">
-      <div class="container py-5">
-        <header class="text-start text-white py-5">
-          <h3 class="mb-4 rounded" id="heading">
-            <a href="#start-shopping" class="bg-white pt-2 py-2 rounded">
-              start shopping
-            </a>
-          </h3>
-          <p class="lead mb-0 bg-dark p-1 rounded">ROYAL-GOODS</p>
-        </header>
-        <select class="form-select-lg" v-on:change="category" required>
+    <div class="container">
+ <CategorySlider
+      :categories="categories"
+    />
+
+    </div>
+  
+
+<!-- featured product-->
+ <div class="container py-2">
+        <div class="text-white pt-2 py-2 rounded mt-2" style="background-color:orangered;">
+          <h3>Feature Product</h3>
+        </div>
+    
+        <div class="card-body py-2">
+          <FeaturedCarousel :baseURL="baseURL" :count="60" />
+        </div>
+        </div>
+    <!--display top category-->
+    <div class="container">
+      
+        <div class="text-white pt-2 py-2 rounded mt-2" style="background-color: purple;">
+          <h3 id="start-shopping">Top Category</h3>
+        </div>
+
+<select class="form-select-lg" v-on:change="category" required>
           <option selected>Shop by Category</option>
           <option
             v-for="category of categories"
@@ -20,30 +35,8 @@
             {{ category.name }}
           </option>
         </select>
-      </div>
 
-      <div
-        style="
-          text-align: center;
-          top: 100px;
-          background-color: orangered;
-          height: px;
-        "
-      >
-        <button type="button" id="btn">
-          <a class="btn btn- mb-0 text-skyblue" href="#shop-now"
-            ><h3>Shop Now</h3></a
-          >
-        </button>
-      </div>
-    </div>
-    <!--display top category-->
-    <div class="container">
-      <div class="row">
-        <div class="col-12 text-white bg-danger">
-          <h3 class="pt-" id="start-shopping">Top Category</h3>
-        </div>
-      </div>
+
       <div class="row">
         <div
           v-for="(category, index) in latestCategories"
@@ -56,11 +49,11 @@
     </div>
     <!--display top product-->
     <div class="container py-2">
-      <div class="row">
-        <div class="col-12 text-white bg-primary">
-          <h3 class="pt-" id="shop-now">Top Product</h3>
+      
+        <div class="text-white bg-primary pt-2 py-2 rounded">
+          <h3 id="shop-now">Top Product</h3>
         </div>
-      </div>
+    
 
       <div class="row">
         <div
@@ -71,36 +64,34 @@
           <ProductBox :product="product" />
         </div>
       </div>
-      <div class="py-2">
-        <div class=" bg-primary text-white">
-          <h3>Feature Product</h3>
-        </div>
 
-        <div class="card-body">
-          <FeaturedCarousel :baseURL="baseURL" :count="20" />
-        </div>
-      </div>
     </div>
+
+    
+
+
 
     <div style="z-index: 2;color:brown;font-size:60px;padding:25px" class="text-end fixed-bottom">
       <a href="https://wa.link/3pxzcs"><i class="bi bi-whatsapp"></i></a>
     </div>
   </div>
+
 </template>
 
 <script>
+import CategorySlider from "@/components/CategorySlider.vue";
 import FeaturedCarousel from "@/components/FeaturedCarousel.vue";
 import ProductBox from "@/components/CategoryBox/ProductBox.vue";
 import CategoryBox from "@/components/CategoryBox/CategoryBox.vue";
 
 export default {
   name: "Home",
-  components: { CategoryBox, ProductBox, FeaturedCarousel },
+  components: { CategoryBox, ProductBox, FeaturedCarousel,CategorySlider },
   props: ["categories", "products", "baseURL"],
   data() {
     return {
       categorySize: 8,
-      productSize: 12,
+      productSize: 8,
     };
   },
   methods: {
@@ -120,7 +111,7 @@ export default {
 
   mounted() {
     this.categorySize = Math.min(8, this.categories.length);
-    this.productSize = Math.min(12, this.products.length);
+    this.productSize = Math.min(8, this.products.length);
   },
 };
 </script>
@@ -132,6 +123,12 @@ export default {
 .bg-cover {
   background-size: 100% 100% !important;
 }
+a{
+  color: purple;
+}
+.lead{
+  background-color: purple;
+}
 #heading {
   font-weight: 400;
 }
@@ -140,9 +137,11 @@ export default {
 }
 .form-select-lg:hover {
   cursor: pointer;
+  color: orange;
 }
 .form-select-lg {
-  background-color: orangered;
+  background-color: purple;
   color: white;
+  max-width: 100%;
 }
 </style>

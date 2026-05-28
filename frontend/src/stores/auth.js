@@ -10,12 +10,14 @@ export const useAuthStore = defineStore("auth", {
     sessionExpired:false
   }),
   getters:{
-    isLoggedIn:(state)=>!!state.token && !state.isTokenExpired,
+    isLoggedIn() {
+  return !!this.token && !this.isTokenExpired;
+},
     isTokenExpired:(state)=>{
       if(!state.token) return true;
       try{
         const decoded=jwtDecode(state.token);
-        return decoded.exp < Date.now() / 1000;
+        return decoded.exp * 1000 < Date.now();
       }catch(err){
         return true;
       }
@@ -43,7 +45,6 @@ export const useAuthStore = defineStore("auth", {
       this.token = null;
       this.isAdmin=false;
       this.sessionExpired=false;
-      localStorage.clear();
 
       //remove from localStorage
       localStorage.removeItem('userId');
@@ -57,10 +58,20 @@ export const useAuthStore = defineStore("auth", {
         this.sessionExpired=true;
       }
     },
-    loadFromStorage(){
-      const token=localStorage.getItem('token');
-      const email=localStorage.getItem('email');
-      if(token && email)this.login({token, email})
-    }
+    
+    loadFromStorage() {
+  const token = localStorage.getItem('token');
+  const email = localStorage.getItem('email');
+
+  if (token) {
+    const decoded = jwtDecode(token);
+
+    this.token = token;
+    this.userId = decoded.userId;
+    this.isAdmin = decoded.isAdmin;
+    this.email = email;
+  }
+}
+
   },
 });
