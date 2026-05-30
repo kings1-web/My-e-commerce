@@ -2,8 +2,11 @@ const { Category } = require("../models/category");
 const express = require("express");
 const multer = require("multer");
 const { Product } = require("../models/product");
-const { v2: cloudinary } = require("cloudinary");
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
+//const { v2: cloudinary } = require("cloudinary");
+const cloudinary = require('cloudinary').v2;
+const streamifier = require("streamifier");
+
+//const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 const router = express.Router();
 
@@ -14,7 +17,7 @@ cloudinary.config({
 });
 
 //MULTER CLOUDINARY STORAGE
-const storage = new CloudinaryStorage({
+/*const storage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: "products",
@@ -26,7 +29,7 @@ const storage = new CloudinaryStorage({
       { quality: "auto" },
     ],
   },
-});
+});*/
 
 /*const storage = new CloudinaryStorage({
   cloudinary,
@@ -50,8 +53,37 @@ const storage = new CloudinaryStorage({
     };
   }
 });*/
-
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 const uploadOptions = multer({ storage });
+
+const uploadToCloudinary = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "products",
+        transformation: [
+          {
+            width: 800,
+            height: 800,
+            crop: "fill",     // 🔥 same size like Jumia
+            gravity: "auto",  // 🔥 smart focus
+          },
+          {
+            quality: "auto",
+            fetch_format: "auto",
+          },
+        ],
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+
+    streamifier.createReadStream(fileBuffer).pipe(stream);
+  });
+};
 
 
 router.get("/", async (req, res) => {
@@ -75,7 +107,7 @@ router.get("/:id", async (req, res) => {
   res.status(200).send(category);
 });
 
-router.post("/", uploadOptions.single("image"), async (req, res) => {
+/*router.post("/", uploadOptions.single("image"), async (req, res) => {
   const file = req.file;
   if (!file) return res.status(400).send("no image in the request");
 
@@ -94,9 +126,45 @@ router.post("/", uploadOptions.single("image"), async (req, res) => {
     ...category._doc,
     image:category.image.replace("/upload/", "/upload/w_800,h_800,q_auto,f_auto/")
   });
+});*/
+
+router.post("/", upload.single("image"), async (req, res) => {
+  if (!req.file) return res.status(400).send("No image uploaded");
+
+  try {
+    const result = await cloudinary.uploader.upload_stream(
+      {
+        folder: "products",
+        transformation: [
+          { width: 800, height: 800, crop: "fill", gravity: "auto" },
+          { quality: "auto", fetch_format: "auto" },
+        ],
+      },
+      async (error, result) => {
+        if (error) return res.status(500).send(error);
+
+        let category = new Category({
+          name: req.body.name,
+          icon: req.body.icon,
+          imagePublicId: result.public_id,   // ✅ ADD HERE
+          color: req.body.color,
+          image: result.secure_url,
+        });
+
+        category = await category.save();
+
+        res.send(category);
+      }
+    );
+
+    // pipe buffer to cloudinary
+    require("streamifier").createReadStream(req.file.buffer).pipe(result);
+  } catch (err) {
+    res.status(500).send(err);
+  }
 });
 
-router.put("/:id", uploadOptions.single("image"), async (req, res) => {
+/*router.put("/:id", uploadOptions.single("image"), async (req, res) => {
   const category = await Category.findById(req.params.id);
   if (!category) return res.status("Invalid Category");
 
@@ -127,6 +195,41 @@ router.put("/:id", uploadOptions.single("image"), async (req, res) => {
     ...updateCategory._doc,
     image:category.image.replace("/upload/", "/upload/w_800,h_800,q_auto,f_auto/")
   });
+});*/
+
+router.put("/:id", upload.single("image"), async (req, res) => {
+  try {
+    let category = await Category.findById(req.params.id);
+    if (!category) {
+      return res.status(404).send("Category not found");
+    }
+
+    let imageUrl = category.image;
+    let imagePublicId = category.imagePublicId;
+
+    // only upload if new image exists
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.buffer);
+      imageUrl = result.secure_url;
+      imagePublicId = result.public_id;   // ✅ ADD HERE
+    }
+
+    const updatedCategory = await Category.findByIdAndUpdate(
+      req.params.id,
+      {
+        name: req.body.name,
+        icon: req.body.icon,
+         imagePublicId: imagePublicId,   // ✅ ADD HERE
+        color: req.body.color,
+        image: imageUrl,
+      },
+      { new: true }
+    );
+
+    res.send(updatedCategory);
+  } catch (error) {
+    res.status(500).send(error);
+  }
 });
 
 router.delete("/:id", (req, res) => {

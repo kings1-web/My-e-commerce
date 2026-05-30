@@ -16,6 +16,9 @@ const categorySchema = mongoose.Schema({
       type:String,
       default:''
     },
+    imagePublicId: {
+  type: String,
+},
 
 
   })

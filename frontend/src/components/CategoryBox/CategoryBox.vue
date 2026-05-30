@@ -14,12 +14,14 @@
     <div class="card-content">
       <RouterLink :to="{ name: 'ListProduct', params: { id: category.id } }">
         <h5 class="title">
-          {{ category.name || 'No Name' }}
+          {{ shortenText(category.name || 'No Name', 20) }}
+
         </h5>
       </RouterLink>
 
       <p class="desc">
-        {{ category.icon || 'No description' }}
+          {{ shortenText(category.icon || 'No Icon', 20) }}
+
       </p>
 
       <!-- ACTIONS -->
@@ -54,6 +56,14 @@ export default {
   },
 
   methods: {
+
+    shortenText(text, length) {
+    if (!text) return "";
+    return text.length > length
+      ? text.substring(0, length) + "..."
+      : text;
+  },
+
     async deleteCategory() {
       if (!confirm("Are you sure you want to delete this category?")) return;
 

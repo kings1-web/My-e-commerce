@@ -14,9 +14,13 @@
     <div class="card-content">
       <RouterLink :to="{ name: 'ShowDetails', params: { id: product.id } }">
         <h5 class="title">
-          {{ product.name || 'No Name' }}
+          {{ shortenText(product.name || 'No Name', 20) }}
+
         </h5>
       </RouterLink>
+
+          <p>{{ shortenText(product.discription || 'No Description', 20) }}</p>
+
 
       <p class="price">
         {{ formatPrice(product.price) }}
@@ -63,6 +67,14 @@ export default {
   },
 
   methods: {
+
+    shortenText(text, length) {
+    if (!text) return "";
+    return text.length > length
+      ? text.substring(0, length) + "..."
+      : text;
+  },
+
     formatPrice(value) {
       if (!value) return "₦0";
       return new Intl.NumberFormat("en-NG", {

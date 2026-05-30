@@ -5,7 +5,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const multer = require("multer");
 const { v2: cloudinary } = require("cloudinary");
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const streamifier = require("streamifier");
+//const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 const router = express.Router();
 //CLOUDINARY CONFIGURATION
@@ -16,7 +17,7 @@ cloudinary.config({
 });
 
 //MULTER CLOUDINARY STORAGE
-const storage = new CloudinaryStorage({
+/*const storage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: "products",
@@ -52,8 +53,38 @@ const storage = new CloudinaryStorage({
     };
   }
 });*/
-
+const storage = multer.memoryStorage();
 const uploadOptions = multer({ storage });
+
+
+
+const uploadToCloudinary = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "products",
+        transformation: [
+          {
+            width: 800,
+            height: 800,
+            crop: "fill",
+            gravity: "auto",
+          },
+          {
+            quality: "auto",
+            fetch_format: "auto",
+          },
+        ],
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+
+    streamifier.createReadStream(fileBuffer).pipe(stream);
+  });
+};
 
 
 
@@ -81,7 +112,7 @@ router.get("/:id", async (req, res) => {
   res.send(product);
 });
 
-router.post("/", uploadOptions.single("image"), async (req, res) => {
+/*router.post("/", uploadOptions.single("image"), async (req, res) => {
   const category = await Category.findById(req.body.category);
   if (!category) return res.status(400).send("Invalid Category");
 
@@ -111,9 +142,41 @@ router.post("/", uploadOptions.single("image"), async (req, res) => {
     ...product._doc,
     image:product.image.replace("/upload/", "/upload/w_800,h_800,q_auto,f_auto/")
   });
+});*/
+
+router.post("/", uploadOptions.single("image"), async (req, res) => {
+  try {
+    const category = await Category.findById(req.body.category);
+    if (!category) return res.status(400).send("Invalid Category");
+
+    if (!req.file) return res.status(400).send("No image uploaded");
+
+    const result = await uploadToCloudinary(req.file.buffer);
+
+    let product = new Product({
+      name: req.body.name,
+      discription: req.body.discription,
+      richDiscription: req.body.richDiscription,
+      image: result.secure_url,
+      imagePublicId: result.public_id,
+      brand: req.body.brand,
+      price: req.body.price,
+      category: req.body.category,
+      countInStock: req.body.countInStock,
+      rating: req.body.rating,
+      numReviews: req.body.numReviews,
+      isFeatured: req.body.isFeatured,
+    });
+
+    product = await product.save();
+
+    res.status(201).send(product);
+  } catch (error) {
+    res.status(500).send(error);
+  }
 });
 
-router.put("/:id", uploadOptions.single("image"), async (req, res) => {
+/*router.put("/:id", uploadOptions.single("image"), async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) {
     return res.status(400).send("Invalid Product Id");
   }
@@ -157,6 +220,52 @@ router.put("/:id", uploadOptions.single("image"), async (req, res) => {
     ...updateProduct._doc,
     image:product.image.replace("/upload/", "/upload/w_800,h_800,q_auto,f_auto/")
   });
+});*/
+
+router.put("/:id", uploadOptions.single("image"), async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).send("Invalid Product Id");
+    }
+
+    const category = await Category.findById(req.body.category);
+    if (!category) return res.status(400).send("Invalid Category");
+
+    let product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).send("Product not found");
+
+    let imageUrl = product.image;
+    let imagePublicId = product.imagePublicId;
+
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.buffer);
+      imageUrl = result.secure_url;
+      imagePublicId = result.public_id;   // ✅ ADD HERE
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      {
+        name: req.body.name,
+        discription: req.body.discription,
+        richDiscription: req.body.richDiscription,
+        image: imageUrl,
+         imagePublicId: imagePublicId,   // ✅ ADD HERE
+        brand: req.body.brand,
+        price: req.body.price,
+        category: req.body.category,
+        countInStock: req.body.countInStock,
+        rating: req.body.rating,
+        numReviews: req.body.numReviews,
+        isFeatured: req.body.isFeatured,
+      },
+      { new: true }
+    );
+
+    res.send(updatedProduct);
+  } catch (error) {
+    res.status(500).send(error);
+  }
 });
 
 router.delete("/:id", (req, res) => {
@@ -199,7 +308,7 @@ router.get("/get/featured/:count", async (req, res) => {
 });
 
 
-router.put(
+/*router.put(
   "/gallery-images/:id",
   uploadOptions.array("images", 10),
   async (req, res) => {
@@ -228,7 +337,7 @@ router.put(
 
     res.send(product);
   }
-);
+);*/
 
 
 module.exports = router;
