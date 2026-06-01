@@ -27,9 +27,8 @@ export default {
   components:{Footer,Navbar,Cart},
   data(){
     return {
-    // baseURL: "https://kings1-web-e-commerce.onrender.com/api/v1/",
     baseURL:"https://royalgoods.onrender.com/api/v1/",
-    // baseURL: "http://localhost:3000/api/v1/",
+     //baseURL: "http://localhost:3000/api/v1/",
       products:null,
       categories:null,
       cartCount:0

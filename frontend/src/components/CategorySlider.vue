@@ -84,7 +84,7 @@ const coverflowEffect = {};
 }
 
 .slider-container {
-  height: 400px; /* 🔥 adjust based on your card height */
+  height: 350px; /* 🔥 adjust based on your card height */
   display: flex;
   align-items: center;
   margin-top:10px;
