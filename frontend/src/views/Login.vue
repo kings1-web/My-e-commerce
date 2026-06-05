@@ -38,11 +38,15 @@ export default {
   props: ["baseURL"],
   data() {
     return {
+       authStore: useAuthStore(),
       email: null,
       password: null,
       loading: false,
     };
   },
+
+
+
   methods: {
     async login(e) {
       if (!this.email || !this.password) {
@@ -65,6 +69,7 @@ export default {
         authStore.login({
           token: res.data.token,
           userId: res.data.user._id,
+           email: res.data.user.email,
           isAdmin: res.data.user.isAdmin,
         });
 
