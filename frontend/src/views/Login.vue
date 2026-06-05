@@ -1,7 +1,7 @@
 <template>
   <div class="text-center bg-dark text-white w-100 h-100">
-     <div v-if="authStore.sessionExpired" class="alert alert-warning">
-       Session expired. plaese log in again.
+    <div v-if="authStore.sessionExpired" class="alert alert-warning">
+      Session expired. plaese log in again.
     </div>
     <div class="row">
       <div class="col-12 justify-content-center d-flex flex-row pt-5">
@@ -14,14 +14,26 @@
             </div>
             <div class="form-group">
               <label>Password</label>
-              <input v-model="password" type="password" class="form-control" />
+              <input
+                v-model="password"
+                :type="showPassword ? 'text' : 'password'"
+                class="form-control"
+              />
             </div>
+            
             <button
               :disabled="loading"
               type="submit"
               class="btn btn-primary mt-2 py-0"
             >
               Continue
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-secondary bg-white d-flex flex-end"
+              @click="showPassword = !showPassword"
+            >
+              {{ showPassword ? "🙈" : "👁" }}
             </button>
           </form>
         </div>
@@ -38,14 +50,13 @@ export default {
   props: ["baseURL"],
   data() {
     return {
-       authStore: useAuthStore(),
+      authStore: useAuthStore(),
       email: null,
       password: null,
       loading: false,
+      showPassword: false, // 👈 add this
     };
   },
-
-
 
   methods: {
     async login(e) {
@@ -69,7 +80,7 @@ export default {
         authStore.login({
           token: res.data.token,
           userId: res.data.user._id,
-           email: res.data.user.email,
+          email: res.data.user.email,
           isAdmin: res.data.user.isAdmin,
         });
 
