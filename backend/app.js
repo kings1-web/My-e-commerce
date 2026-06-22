@@ -1,95 +1,150 @@
 const express = require("express");
+const http = require("http");
 const path = require("path");
 const app = express();
-//const bodyParser = require("body-parser");
+const server = http.createServer(app);
 const morgan = require("morgan");
 const mongoose = require("mongoose");
+const { Server } = require("socket.io");
 const cors = require("cors");
 const dotenv = require('dotenv');
-//dotenv.config()
-//require("dotenv/config");
 
-const authJwt = require("./helpers/jwt");
+const io = new Server(server, {
+  cors: {
+    origin: ["http://localhost:5173", "http://127.0.0.1:5173"], // Allow your Vue Dev server URLs
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+  },
+  pingTimeout: 60000, // Wait 60 seconds before closing an inactive connection
+  pingInterval: 25000 // Send heartbeats every 25 seconds to keep connection alive
+});
+
+// Destructure authJwt correctly if it's exported as an object from your jwt.js file
+const { authJwt } = require("./helpers/jwt");
 const errorHandler = require("./helpers/error-handler");
 
-
-//route
+// Route imports
 const categoriesRouter = require("./routers/categories");
 const ordersRouter = require("./routers/orders");
 const productsRouter = require("./routers/products");
 const usersRouter = require("./routers/users");
-
-
+const installersRouter = require("./routers/installers");
+const RequestsRouter = require("./routers/Requests");
+const reviewsRouter = require("./routers/reviews");
+const installerReviewsRouter=require("./routers/installerReviews")
+const messagesRouter = require("./routers/messages")
 
 const api = process.env.API_URL;
 
-
+// Global Setup Middleware
 app.use(cors());
 app.use(express.json());
 app.use(morgan("tiny"));
 
+app.use('/public/uploads', express.static(__dirname + '/public/uploads'));
 
-//app.options("*", cors());
+// ✅ FIX: Activate the JWT token checking middleware globally here
+app.use(authJwt());
+
+// Routers (Now automatically protected by JWT rules configured in your helper)
+app.use(`${api}/categories`, categoriesRouter);
+app.use(`${api}/orders`, ordersRouter);
+app.use(`${api}/products`, productsRouter);
+app.use(`${api}/users`, usersRouter);
+app.use(`${api}/installers`, installersRouter);
+app.use(`${api}/Requests`, RequestsRouter);
+app.use(`${api}/reviews`, reviewsRouter);
+app.use(`${api}/installer-reviews`, installerReviewsRouter);
+app.use(`${api}/messages`, messagesRouter);
+// Routes Registry
+//app.use("/api/v1/Requests", require("./routers/Requests"));
+//app.use("/api/v1/messages", require("./routers/messages"));
+
+// 🟢 STEP 2: REAL-TIME SOCKET CONNECTION PIPELINE
+io.on("connection", (socket) => {
+  console.log(`🔌 Client connected to Socket server: ${socket.id}`);
+
+  // Listener A: When a user enters the workspace chat view, join an isolated room
+  socket.on("join_room", (requestId) => {
+    socket.join(requestId);
+    console.log(`📁 User joined secure room ID: ${requestId}`);
+  });
+
+  // Listener B: Handle real-time text-only messages sent directly over sockets
+  socket.on("send_message", async (messageData) => {
+    try {
+      const { requestId, senderId, senderModel, messageText } = messageData;
+
+      // 1. Save plain-text messages instantly to MongoDB
+      // (For file attachments, your router handles the save, so this only processes pure text)
+      if (!messageData._id) {
+        const newMessage = new Message({
+          requestId,
+          senderId,
+          senderModel,
+          messageText
+        });
+        const savedMessage = await newMessage.save();
+        
+        // Use the freshly saved document data containing Mongoose timestamps
+        messageData = savedMessage.toObject();
+      }
+
+      // 2. Broadcast the message packet to the other participant in the room
+      socket.to(requestId).emit("receive_message", messageData);
+
+    } catch (err) {
+      console.error("❌ Socket message processing crash:", err.message);
+      socket.emit("socket_error", { message: "Failed to securely process your message text over websocket." });
+    }
+  });
+
+  // Listener C: Handle explicit room disconnect sequences gracefully
+  socket.on("leave_room", (requestId) => {
+    socket.leave(requestId);
+    console.log(`🚪 User left room ID: ${requestId}`);
+  });
+
+  // Listener D: Handle unexpected disconnections (browser crashes, network drops)
+  socket.on("disconnect", (reason) => {
+    console.log(`🔌 Client disconnected (${socket.id}). Reason: ${reason}`);
+  });
+});
 
 
 
-//middleware
-//app.use(bodyParser.json());
-app.use('/public/uploads',express.static(__dirname + '/public/uploads'));
-
-
-
-//routers
-app.use(`${api}/categories`,authJwt(), categoriesRouter);
-app.use(`${api}/orders`,authJwt(), ordersRouter);
-app.use(`${api}/products`,authJwt(), productsRouter);
-app.use(`${api}/users`,authJwt(), usersRouter);
-
-
+// Frontend SPA Fallback handling
 app.use(express.static(path.join(__dirname, "dist")));
 
-// SPA fallback (VERY IMPORTANT)
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
-//app.use();
+// Global Error Handler Middleware
 app.use(errorHandler);
 
+const mongoURI = process.env.BASE_URL || "mongodb://localhost:27017/ecommerce";
+const PORT = process.env.PORT || 3000;
 
-app.use((req, res, next)=>{
-  if(req.path=== '/favicon.ico'){
-    return next();
-  }
-  next();
-})
-
-
-
-
-
-
-
-
-
-
-//database
-
+// Database Connection
 mongoose
   .connect(process.env.BASE_URL)
   .then(() => {
-    console.log("database connection is ready...");
+    console.log("Database connection is ready...");
+    // 💡 IMPORTANT FIX: Must use server.listen instead of app.listen!
+    server.listen(PORT, () => {
+      console.log(`⚡ Full-Stack Gateway Running cleanly on http://localhost:${PORT}`);
+    });
   })
   .catch((err) => {
     console.log(err);
   });
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
-});
+ 
 
-const port = process.env.PORT || 3000;
 
-app.listen(port, () => {
-  console.log("server is running on port" + port);
-});
+
+/*app.listen(port, () => {
+  console.log("Server is running on port " + port);
+});*/
+

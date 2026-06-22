@@ -1,6 +1,8 @@
 require("dotenv").config();
 const { Category } = require("../models/category");
 const { Product } = require("../models/product");
+// 🟢 FIXED: Imported the Review model so the aggregate calculation works!
+const { Review } = require("../models/review");
 const express = require("express");
 const mongoose = require("mongoose");
 const multer = require("multer");
@@ -89,19 +91,46 @@ const uploadToCloudinary = (fileBuffer) => {
 
 
 router.get("/", async (req, res) => {
-  //localhost:3000/api/v1/products?categories=12345,134567
-  let filter = {};
-  if (req.query.categories) {
-    filter = { category: req.query.categories.split(",") };
-  }
-  const productList = await Product.find(filter).populate("category");
+  try {
+    const productsList = await Product.find().populate("category");
 
-  if (!productList) {
-    res.status(500).json({ success: false });
+    // Map through products to calculate review statistics on-the-fly
+    const productsWithRatings = await Promise.all(
+      productsList.map(async (product) => {
+        let averageRating = 0;
+        let totalReviews = 0;
+
+        // 🟢 Guarded with a local catch so a single broken product can't crash the API
+        try {
+          const reviews = await Review.find({ product: product.id });
+          totalReviews = reviews.length;
+          
+          if (totalReviews > 0) {
+            const total = reviews.reduce((sum, r) => sum + r.rating, 0);
+            averageRating = total / totalReviews;
+          }
+        } catch (reviewErr) {
+          console.error(`Failed to parse reviews for product ${product.id}:`, reviewErr.message);
+        }
+
+        return {
+          ...product.toObject(),
+          id: product.id, 
+          averageRating: averageRating,
+          reviewCount: totalReviews
+        };
+      })
+    );
+
+    res.status(200).json(productsWithRatings);
+  } catch (err) {
+    // 🟢 Prints the exact crash description in your terminal console window!
+    console.error("Critical error in public products fetch:", err); 
+    res.status(500).json({ success: false, error: err.message });
   }
-  
-  res.send(productList);
 });
+
+
 
 router.get("/:id", async (req, res) => {
   const product = await Product.findById(req.params.id).populate("category");
@@ -298,13 +327,48 @@ router.get("/get/count", async (req, res) => {
 });
 
 router.get("/get/featured/:count", async (req, res) => {
-  count = req.params.count ? req.params.count : 0;
-  const products = await Product.find({ isFeatured: true }).limit(+count);
+  try {
+    const count = req.params.count ? req.params.count : 0;
+    
+    // 1. Fetch only featured products from your MongoDB collection
+    const productsList = await Product.find({ isFeatured: true }).limit(+count);
 
-  if (!products) {
-    res.status(500).json({ success: false });
+    if (!productsList || productsList.length === 0) {
+      return res.status(200).json([]); // Return empty array instead of 500 error block
+    }
+
+    // 2. Loop through featured items to attach average review scores on-the-fly
+    const productsWithRatings = await Promise.all(
+      productsList.map(async (product) => {
+        let averageRating = 0;
+        let totalReviews = 0;
+
+        try {
+          const reviews = await Review.find({ product: product.id });
+          totalReviews = reviews.length;
+          
+          if (totalReviews > 0) {
+            const total = reviews.reduce((sum, r) => sum + r.rating, 0);
+            averageRating = total / totalReviews;
+          }
+        } catch (reviewErr) {
+          console.error(`Failed to parse reviews for featured product ${product.id}:`, reviewErr.message);
+        }
+
+        return {
+          ...product.toObject(),
+          id: product.id, 
+          averageRating: averageRating,
+          reviewCount: totalReviews
+        };
+      })
+    );
+
+    res.status(200).json(productsWithRatings);
+  } catch (err) {
+    console.error("Critical error in featured products fetch:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
-  res.send(products);
 });
 
 

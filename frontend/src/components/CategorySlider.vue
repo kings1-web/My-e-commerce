@@ -1,6 +1,27 @@
 <template>
+  
   <section class="w-11/1 mx-auto mt-10 relative slider-container">
     <!-- NAV BUTTONS -->
+
+    <!-- Left Button (Previous) -->
+<button
+  ref="prevBtn"
+  class="position-absolute top-50 start-0 translate-middle-y ms-3 z-3 text-white bg-primary p-2 rounded-circle"
+  style="top: 66%;"
+>
+  <i class="bi bi-arrow-left fs-3"></i>
+</button>
+
+<!-- Right Button (Next) -->
+<button
+  ref="nextBtn"
+  class="position-absolute top-50 end-0 translate-middle-y me-3 z-3 text-white bg-primary p-2 rounded-circle"
+  style="top: 66%;"
+>
+  <i class="bi bi-arrow-right fs-3"></i>
+</button>
+
+
     <button ref="prevBtn" class="nav-btn left">‹</button>
     <button ref="nextBtn" class="nav-btn right">›</button>
 
@@ -33,6 +54,7 @@
       </swiper-slide>
     </swiper>
   </section>
+  
 </template>
 
 <script setup>

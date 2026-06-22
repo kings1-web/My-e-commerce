@@ -61,7 +61,7 @@ router.post("/register", async (req, res) => {
   res.send(user);
 });
 
-router.post(`/login`, async (req, res) => {
+/*router.post(`/login`, async (req, res) => {
   const user = await User.findOne({ email: req.body.email });
   const secret=process.env.secret;
 
@@ -85,6 +85,54 @@ router.post(`/login`, async (req, res) => {
     res.status(200).send({user: user.email, token: token});
   } else {
     res.status(400).send("password is wrong!");
+  }
+});*/
+
+router.post("/login", async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+    const secret = process.env.secret;
+
+    if (!user) {
+      return res.status(400).send("User not found.");
+    }
+
+    if (user && bcrypt.compareSync(req.body.password, user.passwordHash)) {
+      
+      // 🟢 SYNCHRONIZE ROLES STACK ON-THE-FLY
+      let userRoles = [...user.roles];
+      
+      // Auto-migrate old Admin flag accounts into your upgraded roles framework
+      if (user.isAdmin && !userRoles.includes("admin")) {
+        userRoles.push("admin");
+      }
+
+      // Encode the multiple roles inside the JWT claims data parcel
+      const token = jwt.sign(
+        {
+          userId: user.id,
+          isAdmin: user.isAdmin, // Maintained to prevent legacy endpoint drops
+          roles: userRoles       // 🟢 Upwork System claim data injection
+        },
+        secret
+      );
+
+      // Return both the basic payload data and the newly generated security token
+      res.status(200).send({
+        user: user.email,
+        token: token,
+        roles: userRoles, // Pass array out to assist frontend router hooks
+        userDetails: {
+          id: user.id,
+          name: user.name,
+          isApproved: user.isApproved
+        }
+      });
+    } else {
+      return res.status(400).send("Password is wrong!");
+    }
+  } catch (err) {
+    return res.status(500).send("Server runtime login fault error: " + err.message);
   }
 });
 

@@ -19,6 +19,25 @@
         </h5>
       </RouterLink>
 
+      <!-- Inside ProductBox.vue Template, place this right below the title RouterLink -->
+<div class="rating-container mb-2">
+  <div class="d-flex align-items-center gap-1">
+    <!-- Star Array Loop Display Segment -->
+    <span class="stars text-warning small">
+      <i 
+        v-for="star in 5" 
+        :key="star" 
+        :class="getStarClass(product.averageRating || 0, star)"
+      ></i>
+    </span>
+    <!-- Review Numerical Text Metric metadata -->
+    <span class="text-muted text-xs ms-1" style="font-size: 0.75rem;">
+      ({{ product.averageRating ? product.averageRating.toFixed(1) : '0.0' }})
+    </span>
+  </div>
+</div>
+
+
           <p>{{ shortenText(product.discription || 'No Description', 20) }}</p>
 
 
@@ -54,6 +73,7 @@
 
 <script>
 import axios from "axios";
+import { onMounted } from "vue";
 
 export default {
   name: "ProductBox",
@@ -67,6 +87,17 @@ export default {
   },
 
   methods: {
+
+     // 🟢 ADDED: Dynamically calculates star configurations on product box cards
+  getStarClass(avgRating, starIndex) {
+    if (avgRating >= starIndex) {
+      return 'bi bi-star-fill'; // Full golden star icon font mapping
+    } else if (avgRating >= starIndex - 0.5) {
+      return 'bi bi-star-half'; // Half golden star split rule
+    } else {
+      return 'bi bi-star'; // Empty dark icon contour rule boundary
+    }
+  },
 
     shortenText(text, length) {
     if (!text) return "";
@@ -113,11 +144,28 @@ export default {
       }
     },
   },
+   
 };
 </script>
 
 <style scoped>
+
+.rating-container {
+  display: flex;
+  align-items: center;
+  height: 20px;
+}
+.stars i {
+  margin-right: 1px;
+}
+.text-xs {
+  font-size: 11px;
+}
+
+
+
 .product-card {
+  line-height: 12px;
   background: #fff;
   border-radius: 12px;
   overflow: hidden;

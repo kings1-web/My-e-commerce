@@ -21,6 +21,19 @@ const userSchema = mongoose.Schema({
     type: Boolean,
     require: false,
   },
+   // 🟢 UPWORK ROLE ARRAY SYSTEM: Replaces a strict true/false boolean flag
+  roles: {
+    type: [String],
+    enum: ["customer", "installer", "admin"],
+    default: ["customer"]
+  },
+  // 🟢 TECH INSTALLER METRICS: Nesting installer parameters on the same profile account
+  isApproved: { type: Boolean, default: false },
+  location: { type: String, default: "" },
+  skills: { type: [String], default: [] },
+  installerStatus: { type: String, default: "Active" },
+  images: { type: String, default: "" },
+  imagesPublicId: { type: String, default: "" },
   street: {
     type: String,
     default: "",

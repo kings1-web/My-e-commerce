@@ -120,7 +120,7 @@ export default {
 
       // Step 2: Trigger Paystack
       const handler = PaystackPop.setup({
-        key: 'pk_live_bbc0e2472f9d0b0b0d5c477017165323dd7542a6',  // Replace with your Paystack public key
+        key: 'pk_test_72fa0a4bc46c54a074a544b188865ddcbe457cf0',  // Replace with your Paystack public key
         email: this.address.email,
         amount: totalPrice * 100,  // Paystack expects amount in kobo
         currency: 'NGN',

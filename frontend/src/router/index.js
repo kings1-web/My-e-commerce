@@ -21,6 +21,11 @@ import { useAuthStore } from '@/stores/auth'
 import UserOrders from '@/views/UserOrders.vue'
 import GalleryUpload from '@/views/GalleryUpload.vue'
 import FeaturedCarousel from '@/components/FeaturedCarousel.vue'
+import InstallerRegister from "@/views/InstallerRegister.vue";
+import InstallerLogin from "@/views/InstallerLogin.vue";
+import StarRating from '@/components/StarRating.vue'
+import Installers from '@/views/Installers.vue'
+import { useInstallerStore } from "@/stores/installer";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -127,24 +132,84 @@ const router = createRouter({
       name:'PaymentFailure',
       component:Failure
     },
-   
-    
+    {
+  path: "/installers",
+  component: Installers
+},
+
+    {
+  path: "/installer-register",
+  component: InstallerRegister
+},
+{
+  path: "/installer-login",
+  name:InstallerLogin,
+  component: InstallerLogin,
+   meta: { guestOnly: true } // Tagging this so logged-in installers can't access
+},
+{
+  path: "/installer/:id",
+  name: "InstallerProfile",
+  component: () => import("@/views/InstallerProfile.vue"),
+  props: true // Automatically passes the :id parameter into the component as a prop
+},
+
+{
+  path: "/RatingReview",
+  name:"StarRating",
+  component: StarRating
+},
+   {
+  path: "/installer-dashboard",
+  name:"InstallerDashboard",
+  component: () => import("@/views/InstallerDashboard.vue"),
+  meta: { requiresInstaller: true }
+},
+{
+  path: "/workspace/chat/:requestId",
+  name: "WorkspaceChat",
+  component: () => import("@/views/WorkspaceChat.vue"),
+  props: true, // Passes requestId into the component as a prop automatically
+  meta: { requiresAuth: true } // Keeps the chat protected
+},
+// Inside your frontend src/router/index.js file
+{
+  path: "/dashboard",
+  name: "UserDashboard",
+  component: () => import("@/views/UserDashboard.vue"),
+  meta: { requiresAuth: true } // Guarantees route protection mechanics layer
+},
+
+
     {
       path:'/:pathMatch(.*)*',
       component:Page
-    }
+    },
+
   ],
 })
 
-router.beforeEach((to, from, next)=>{
-  const authStore=useAuthStore();
-  if(to.meta.requiresAuth && !authStore.token){
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore();
+  const InstallerStore=useInstallerStore();
+
+  const installerToken = localStorage.getItem("installerToken");
+
+  if (to.meta.requiresAuth && !authStore.token) {
     next('/login');
-  }else if(to.meta.requiresAdmin && !authStore.isAdmin){
+  } 
+  else if (to.meta.requiresAdmin && !authStore.isAdmin) {
     next('/not-authorized');
-  }else{
+  } 
+  else if (to.meta.requiresInstaller && !InstallerStore.installer) {
+    next('/installer-login');
+  } 
+  else {
     next();
   }
-})
+});
+
+
+
 
 export default router

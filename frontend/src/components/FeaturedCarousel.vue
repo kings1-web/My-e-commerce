@@ -8,7 +8,12 @@
       :space-between="15"
       :breakpoints="breakpoints"
       :autoplay="{ delay: 3000, disableOnInteraction: false }"
-      :loop="true"
+
+      :loop="products.length > 4" 
+  
+       :slides-per-group="1"
+
+
       class="mySwiper"
     >
       <SwiperSlide
@@ -36,6 +41,25 @@
                 {{ truncate(product.name, 25) }}
               </p>
             </RouterLink>
+     
+<!-- Inside FeaturedCarousel.vue, place this right below the product title RouterLink -->
+<div class="rating-box mb-2">
+  <div class="d-flex align-items-center gap-1">
+    <!-- Star Icons Design Element Mapping -->
+    <span class="stars text-warning small" style="font-size: 0.8rem; color: #ffc107;">
+      <i 
+        v-for="star in 5" 
+        :key="star" 
+        :class="getStarClass(product.averageRating || 0, star)"
+      ></i>
+    </span>
+    <!-- Review Numeric Text Metric -->
+    <span class="text-muted ms-1" style="font-size: 0.75rem;">
+      ({{ product.averageRating ? product.averageRating.toFixed(1) : '0.0' }})
+    </span>
+  </div>
+</div>
+
 
             <!-- PRICE -->
             <div class="price-box">
@@ -115,6 +139,18 @@ export default {
   },
 
   methods: {
+
+     // 🟢 ADDED: Calculates individual star display attributes for your swiper cards
+  getStarClass(avgRating, starIndex) {
+    if (avgRating >= starIndex) {
+      return 'bi bi-star-fill'; // Full star class
+    } else if (avgRating >= starIndex - 0.5) {
+      return 'bi bi-star-half'; // Half star class
+    } else {
+      return 'bi bi-star'; // Empty contour star class
+    }
+  },
+
     featured() {
       axios
         .get(`${this.baseURL}products/get/featured/${this.count}`)
@@ -169,6 +205,7 @@ export default {
 </script>
 
 <style scoped>
+
 .featured-wrapper {
   margin: 0px 0;
 }
@@ -181,6 +218,7 @@ export default {
 
 /* CARD */
 .product-card {
+  line-height: 2x;
   position: relative;
   background: #fff;
   border-radius: 10px;
