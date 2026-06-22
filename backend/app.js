@@ -29,7 +29,7 @@ const ordersRouter = require("./routers/orders");
 const productsRouter = require("./routers/products");
 const usersRouter = require("./routers/users");
 const installersRouter = require("./routers/installers");
-const RequestsRouter = require("./routers/Requests");
+const requestsRouter = require("./routers/requests");
 const reviewsRouter = require("./routers/reviews");
 const installerReviewsRouter=require("./routers/installerReviews")
 const messagesRouter = require("./routers/messages")
@@ -52,7 +52,7 @@ app.use(`${api}/orders`, ordersRouter);
 app.use(`${api}/products`, productsRouter);
 app.use(`${api}/users`, usersRouter);
 app.use(`${api}/installers`, installersRouter);
-app.use(`${api}/Requests`, RequestsRouter);
+app.use(`${api}/requests`, RequestsRouter);
 app.use(`${api}/reviews`, reviewsRouter);
 app.use(`${api}/installer-reviews`, installerReviewsRouter);
 app.use(`${api}/messages`, messagesRouter);
