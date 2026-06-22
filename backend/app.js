@@ -52,7 +52,7 @@ app.use(`${api}/orders`, ordersRouter);
 app.use(`${api}/products`, productsRouter);
 app.use(`${api}/users`, usersRouter);
 app.use(`${api}/installers`, installersRouter);
-app.use(`${api}/requests`, RequestsRouter);
+app.use(`${api}/requests`, requestsRouter);
 app.use(`${api}/reviews`, reviewsRouter);
 app.use(`${api}/installer-reviews`, installerReviewsRouter);
 app.use(`${api}/messages`, messagesRouter);
