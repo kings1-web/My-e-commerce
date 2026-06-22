@@ -20,6 +20,7 @@ function authJwt() {
     { url: /\/api\/v1\/installer-reviews\/installer(.*)/, methods: ["GET", "OPTIONS"] },
     // Inside your helpers/jwt.js file under unless.path regex loop configurations:
     { url: /\/api\/v1\/messages\/history\/(.*)/, methods: ["GET", "OPTIONS"] },
+     { url: /\/favicon.ico/, methods: ['GET'] },   // ✅ add this
 
      
     // 🟢 ADD THIS: Excludes public product review lookups from requiring a JWT token
