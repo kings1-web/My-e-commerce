@@ -43,8 +43,7 @@ app.use(morgan("tiny"));
 
 app.use('/public/uploads', express.static(__dirname + '/public/uploads'));
 
-// ✅ FIX: Activate the JWT token checking middleware globally here
-app.use(authJwt());
+
 
 // Routers (Now automatically protected by JWT rules configured in your helper)
 app.use(`${api}/categories`, categoriesRouter);
@@ -119,7 +118,8 @@ app.use(express.static(path.join(__dirname, "dist")));
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
-
+// ✅ FIX: Activate the JWT token checking middleware globally here
+app.use('/api', authJwt());
 // Global Error Handler Middleware
 app.use(errorHandler);
 
