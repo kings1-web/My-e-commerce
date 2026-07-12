@@ -109,50 +109,93 @@
       </div>
     </div>
 
-   
-
     <!-- Inside your existing ShowDatail.vue template layout -->
-<div class="mt-4 p-3 bg-primary-subtle rounded border border-light-subtle shadow-xs">
-  <h6 class="fw-bold text-dark mb-1">🔧 Professional Setup Operations Workspace</h6>
-  <p class="small text-muted mb-3">
-    Track onboarding service status or debate pricing guidelines with your selected local technician safely on-platform.
-  </p>
-
-  <!-- 🟢 CASE A: Customer has not sent an installation request yet -->
-  <button
-    v-if="!activeContractRequest"
-    type="button"
-    class="btn btn-primary d-inline-flex align-items-center gap-2 shadow-xs fw-semibold"
-    @click="openInstallationModal"
-  >
-    👨‍🔧 Request Installation Setup
-  </button>
-
-  <!-- 🟡 CASE B: Request is sent, but installer hasn't responded yet (Chat is locked) -->
-  <div v-else-if="activeContractRequest.status === 'pending'" class="d-flex align-items-center gap-2">
-    <button class="btn btn-secondary btn-sm px-3 py-2 fw-semibold" disabled>
-      ⏳ Request Sent (Awaiting Installer)
-    </button>
-    <span class="text-muted small italic ms-1">Chat will unlock as soon as they accept.</span>
-  </div>
-
-  <!-- 🔵 CASE C: Installer accepted/quoted the contract (🟢 CHAT ACCESS UNLOCKED) -->
-  <div v-else-if="activeContractRequest.status !== 'pending'">
-    <RouterLink
-      :to="{ name: 'WorkspaceChat', params: { requestId: activeContractRequest._id || activeContractRequest.id } }"
-      class="btn btn-success d-inline-flex align-items-center gap-2 px-4 py-2 fw-bold shadow-xs text-white"
+    <div
+      class="mt-4 p-3 bg-primary-subtle rounded border border-light-subtle shadow-xs"
     >
-      💬 Open Secure Installer Chat
-    </RouterLink>
+      <h6 class="fw-bold text-dark mb-1">
+        🔧 Professional Setup Operations Workspace
+      </h6>
+      <p class="small text-muted mb-3">
+        Track onboarding service status or debate pricing guidelines with your
+        selected local technician safely on-platform.
+      </p>
 
-  </div>
-  <router-link
-              to="/installers"
-              class="small text-primary text-decoration-none fw-semibold p-1"
-            >
-              View all network installers &rarr;
-            </router-link>
-</div>
+      <!-- 🟢 CASE A: Customer has not sent an installation request yet -->
+      <button
+        v-if="!activeContractRequest"
+        type="button"
+        class="btn btn-primary d-inline-flex align-items-center gap-2 shadow-xs fw-semibold"
+        @click="openInstallationModal"
+      >
+        👨‍🔧 Request Installation Setup
+      </button>
+
+      <!-- 🟡 CASE B: Request is sent, but installer hasn't responded yet (Chat is locked) -->
+      <div
+        v-else-if="activeContractRequest.status === 'pending'"
+        class="d-flex align-items-center gap-2"
+      >
+        <button class="btn btn-secondary btn-sm px-3 py-2 fw-semibold" disabled>
+          ⏳ Request Sent (Awaiting Installer)
+        </button>
+        <span class="text-muted small italic ms-1"
+          >Chat will unlock as soon as they accept.</span
+        >
+      </div>
+
+      <!-- 🔵 CASE C: Installer accepted/quoted the contract (🟢 CHAT ACCESS UNLOCKED) -->
+      <div v-else-if="activeContractRequest.status !== 'pending'">
+        <RouterLink
+          :to="{
+            name: 'WorkspaceChat',
+            params: {
+              requestId: activeContractRequest._id || activeContractRequest.id,
+            },
+          }"
+          class="btn btn-success d-inline-flex align-items-center gap-2 px-4 py-2 fw-bold shadow-xs text-white"
+        >
+          💬 Open Secure Installer Chat
+        </RouterLink>
+      </div>
+
+      <div v-if="activeContractRequest" class="mt-3">
+        <span class="badge bg-info">
+          Status: {{ activeContractRequest.status }}
+        </span>
+
+        <span
+          v-if="activeContractRequest.paymentStatus === 'paid'"
+          class="badge bg-success ms-2"
+        >
+          💰 Escrow Funded
+        </span>
+
+        <span
+          v-if="activeContractRequest.dispute?.isOpen"
+          class="badge bg-danger ms-2"
+        >
+          ⚠️ Dispute Open
+        </span>
+      </div>
+
+      <button
+        v-if="
+          activeContractRequest && activeContractRequest.status === 'completed'
+        "
+        class="btn btn-danger mt-2"
+        @click="openDispute(activeContractRequest)"
+      >
+        ⚠️ Open Dispute
+      </button>
+
+      <router-link
+        to="/installers"
+        class="small text-primary text-decoration-none fw-semibold p-1"
+      >
+        View all network installers &rarr;
+      </router-link>
+    </div>
 
     <!-- ========================================================================= -->
     <!-- 🌟 NEW ARRANGEMENT: PRODUCT REVIEWS AND RATING LAYOUT SECTION -->
@@ -314,7 +357,7 @@
               ref="closeSetupModalBtn"
             ></button>
           </div>
-          <form @submit.prevent="submitInstallationRequest">
+          <form @submit.prevent="submitSingleInstallerRequest">
             <div class="modal-body py-4">
               <!-- Step 1: Select an Approved Installer from a Dropdown -->
               <div class="mb-3">
@@ -426,7 +469,9 @@ export default {
       isSubmitting: false,
 
       // 🟢 ADDED: Tracks active escrow request instances for this page item
-    activeContractRequest: null 
+      activeContractRequest: null,
+
+      bsModalInstance: null,
     };
   },
   computed: {
@@ -466,26 +511,62 @@ export default {
     },
   },
   methods: {
-
-     // 🟢 ADDED METHOD: Automatically syncs request states from MongoDB when the product loads
-  async checkActiveUserInstallationRequest(productId) {
-    if (!this.authStore.token) return; // Skip if visitor is not a logged-in customer
-
-    try {
-      const customerId = this.authStore.user?.id || this.authStore.user?._id;
-      
-      // Hit a customized filter search route on your backend Requests router
-      const res = await axios.get(`${this.baseURL}Requests/check-status/${productId}/${customerId}`, {
-        headers: { Authorization: `Bearer ${this.authStore.token}` }
+    async openDispute(request) {
+      const { value: reason } = await this.$swal({
+        title: "Open Dispute",
+        input: "text",
+        inputPlaceholder: "Enter reason...",
+        showCancelButton: true,
       });
-      
-      // If a matching request row exists, save it to the local state cache variables
-      this.activeContractRequest = res.data || null;
-    } catch (err) {
-      console.error("Error evaluating customer installation profile status:", err);
-      this.activeContractRequest = null;
-    }
-  },
+
+      if (!reason) return;
+
+      try {
+        await axios.put(
+          `${this.baseURL}requests/${request._id}/dispute`,
+          { reason },
+          {
+            headers: {
+              Authorization: `Bearer ${this.authStore.token}`,
+            },
+          },
+        );
+
+        this.$swal("Dispute opened!", "", "success");
+
+        // refresh request
+        await this.checkActiveUserInstallationRequest(this.product.id);
+      } catch (err) {
+        console.error(err);
+      }
+    },
+
+    // 🟢 ADDED METHOD: Automatically syncs request states from MongoDB when the product loads
+    async checkSpecificInstallerRequestStatus() {
+      if (!this.authStore.token) return;
+
+      try {
+        const customerId =
+          this.authStore.user?.id ||
+          this.authStore.user?._id ||
+          this.authStore.userId;
+
+        const res = await axios.get(
+          `${this.baseURL}requests/check-installer-status/${this.id}/${customerId}`,
+          {
+            headers: { Authorization: `Bearer ${this.authStore.token}` },
+          },
+        );
+
+        this.activeContractRequest = res.data || null;
+      } catch (err) {
+        console.error(
+          "Error evaluating installer profile request mappings:",
+          err,
+        );
+        this.activeContractRequest = null;
+      }
+    },
 
     // 1. Opens the installation form overlay window
     async openInstallationModal() {
@@ -501,7 +582,9 @@ export default {
 
       try {
         // Fetch all active approved technicians automatically for selection lists
-        const res = await axios.get(`${this.baseURL}installers/approved`);
+        const res = await axios.get(`${this.baseURL}installers/approved`, {
+          headers: { Authorization: `Bearer ${this.authStore.token}` },
+        });
         this.approvedInstallers = Array.isArray(res.data) ? res.data : [];
 
         // Reset old address form memory states safely
@@ -511,8 +594,8 @@ export default {
         // Open the Bootstrap Modal overlay container
         const modalElement = document.getElementById("productPageAddressModal");
         if (modalElement) {
-          const bootstrapModal = new bootstrap.Modal(modalElement);
-          bootstrapModal.show();
+          this.bsModalInstance = new bootstrap.Modal(modalElement);
+          this.bsModalInstance.show();
         }
       } catch (err) {
         console.error("Error setting up marketplace options dialog:", err);
@@ -523,44 +606,63 @@ export default {
       }
     },
 
-    // 2. Form submission processor: Ships data properties straight to MongoDB routers/Requests.js
-    async submitInstallationRequest() {
+    async submitSingleInstallerRequest() {
+      const customerId = this.authStore.userId;
+      const customerPhone = this.authStore.user?.phone;
+
+      const installerId = this.selectedInstallerId; // ✅ FIXED
+
+      if (!customerId) return alert("Customer ID missing.");
+
+      if (!installerId) {
+        return alert("Installer not selected properly.");
+      }
+
+      if (!customerPhone) {
+        return alert("Your phone number is missing. Update your profile.");
+      }
+
+      if (!this.customerAddress || !this.customerAddress.trim()) {
+        return alert("Please enter a valid address.");
+      }
+
       this.isSubmitting = true;
+
       try {
-        const customerId = this.authStore.user?.id || this.authStore?.userId;
+        const targetProductId = this.$route.params.id || null;
+
 
         await axios.post(
-          `${this.baseURL}Requests`,
+          `${this.baseURL}requests/send-to-installer`,
           {
             userId: customerId,
-            installerId: this.selectedInstallerId,
-            product: this.product.id || this.$route.params.id, // ✅ Passes current page item ID context context cleanly
+            installerId,
             address: this.customerAddress.trim(),
+            phone: String(customerPhone).trim(),
+            productId: targetProductId,
           },
           {
             headers: { Authorization: `Bearer ${this.authStore.token}` },
           },
         );
 
-        // Close the dialog box programmatically
-        if (this.$refs.closeSetupModalBtn) {
-          this.$refs.closeSetupModalBtn.click();
-        }
+      if (this.bsModalInstance) {
+  this.bsModalInstance.hide();
+}
 
-        this.$swal({
-          text: "Installation request successfully sent to the technician's dashboard!",
-          icon: "success",
-        });
-        // Re-trigger lookups to switch the interface layout immediately to Step B ("Request Sent")
-      await this.checkActiveUserInstallationRequest(this.$route.params.id);
+setTimeout(() => {
+  this.$swal({
+    title: "Request Sent! 🚀",
+    icon: "success"
+  });
+}, 300);
+
+        this.customerAddress = "";
+
+        await this.checkSpecificInstallerRequestStatus();
       } catch (err) {
-        console.error(err);
-        this.$swal({
-          text:
-            "Failed to create service booking: " +
-            (err.response?.data?.message || err.message),
-          icon: "warning",
-        });
+        console.error("Frontend Submit Error:", err);
+        alert(err.response?.data?.message || "Failed to send request.");
       } finally {
         this.isSubmitting = false;
       }
@@ -681,6 +783,11 @@ export default {
     this.category =
       this.categories.find((c) => c.id == this.product.category?.id) || {};
     this.token = localStorage.getItem("token");
+
+  if (this.product?.id) {
+  await this.checkSpecificInstallerRequestStatus();
+}
+
     this.$emit("fetchData");
   },
 };

@@ -1,356 +1,690 @@
 <template>
-  <div class="container py-4">
-    <!-- Top Admin Navigation Links -->
-    <div class="d-flex gap-3 justify-content-center mb-5">
-      <RouterLink :to="{ name: 'AdminProduct' }" class="btn btn-primary btn-lg">
-        Admin Product
-      </RouterLink>
-      <RouterLink :to="{ name: 'Category' }" class="btn btn-primary btn-lg">
-        Admin Category
-      </RouterLink>
-    </div>
-
-    <!-- Users & Orders Management Segment -->
-    <div class="card shadow-sm mb-5">
-      <div class="card-header bg-dark text-white">
-        <h5 class="mb-0">All Customer Orders</h5>
-      </div>
-      <div class="card-body">
-        <div v-if="loading" class="text-center py-3 text-muted">
-          <span class="spinner-border spinner-border-sm me-2"></span>Loading user data...
+  <div class="admin-dashboard-wrapper bg-light min-vh-100 py-4">
+    <div class="container-fluid px-md-5">
+      
+      <!-- TOP ACTION BAR & NAVIGATION HEADER BANNER -->
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-4 border-bottom gap-3">
+        <div>
+          <h3 class="fw-bold text-dark mb-1">Administrative Management Hub</h3>
+          <p class="text-muted mb-0 small">Vet onboarding technicians, coordinate inventory catalogs, and process operational Paystack payouts.</p>
         </div>
-
-        <div v-else class="table-responsive">
-          <table class="table table-striped table-hover align-middle border">
-            <thead class="table-light">
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th class="text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="user in users" :key="user.id">
-                <td>{{ user.name }}</td>
-                <td>{{ user.email }}</td>
-                <td class="text-center">
-                  <button type="button" class="btn btn-sm btn-outline-primary" @click="fetchOrders(user.id)">
-                    View Orders
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="d-flex gap-2">
+          <RouterLink :to="{ name: 'AdminProduct' }" class="btn btn-white border bg-white shadow-xs px-3 fw-semibold text-dark">
+            📦 Product Catalog
+          </RouterLink>
+          <RouterLink :to="{ name: 'Category' }" class="btn btn-white border bg-white shadow-xs px-3 fw-semibold text-dark">
+            🗂️ Manage Categories
+          </RouterLink>
         </div>
       </div>
-    </div>
 
-    <!-- Selected User Orders Section -->
-    <div v-if="selectedOrders.length" class="mb-5">
-      <div class="alert alert-info py-2 mb-3">
-        <h6 class="mb-0 fw-bold">Displaying Orders for: {{ selectedUser?.email }}</h6>
-      </div>
-
-      <div class="table-responsive mb-4">
-        <table class="table table-bordered align-middle">
-          <thead class="table-dark">
-            <tr>
-              <th>Home Address</th>
-              <th>Phone No</th>
-              <th>City</th>
-              <th>Country / State</th>
-              <th>Status</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="ord in selectedOrders" :key="ord.id">
-              <td>{{ ord.shippingAddress1 }}</td>
-              <td>{{ ord.phone }}</td>
-              <td>{{ ord.city }}</td>
-              <td>{{ ord.country }}</td>
-              <td>
-                <select v-model="ord.status" @change="updateStatus(ord)" class="form-select form-select-sm">
-                  <option value="Paid">Paid</option>
-                  <option value="Processing">Processing</option>
-                  <option value="Shipped">Shipped</option>
-                  <option value="Delivered">Delivered</option>
-                  <option value="Cancelled">Cancelled</option>
-                </select>
-              </td>
-              <td class="small">{{ new Date(ord.dateOrdered).toLocaleString() }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Order Items Detail Cards Grid -->
-      <div class="row">
-        <div v-for="order in selectedOrders" :key="order.id" class="col-md-6 mb-4">
-          <div class="card h-100 shadow-xs border-light-subtle">
-            <div class="card-body p-3">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="card-title fw-bold mb-0 text-success">Total: ${{ order.totalPrice }}</h6>
-                <button class="btn btn-sm btn-outline-danger" @click="deleteOrder(order.id)">
-                  Delete Order
-                </button>
-              </div>
-              <p class="small fw-semibold border-bottom pb-1 mb-2 text-muted">Purchased Items:</p>
-              <ul class="list-group list-group-flush small">
-                <li v-for="item in order.orderItems" :key="item.id" class="list-group-item px-0 py-2">
-                  <div v-if="item.product" class="d-flex gap-3 align-items-center">
-                    <img :src="item.product.image" alt="Product" class="img-thumbnail" width="70" />
-                    <div>
-                      <h6 class="mb-0 fw-bold small text-dark">{{ item.product.name }}</h6>
-                      <span class="text-muted d-block" style="font-size:0.75rem;">Qty: {{ item.quantity }} | Category: {{ item.product?.category?.name || 'N/A' }}</span>
-                      <span class="fw-semibold text-primary" style="font-size:0.8rem;">Price: {{ item.product.price }} NGN</span>
-                    </div>
-                  </div>
-                  <div v-else class="text-muted italic">Product info not available</div>
-                </li>
-              </ul>
+      <!-- MAIN SPLIT WORKSPACE GRID SYSTEM -->
+      <div class="row g-4">
+        
+        <!-- ========================================================================= -->
+        <!-- 🧭 LEFT GRID SIDEBAR COLUMN: VETTING TASKS AND CLIENTS RECORDS LIST -->
+        <!-- ========================================================================= -->
+        <div class="col-xl-4 d-flex flex-column gap-4">
+          
+          <!-- PANEL A: TECHNICIAN ONBOARDING APPROVAL LIST -->
+          <div class="card border-0 shadow-sm rounded-3 bg-white overflow-hidden">
+            <div class="card-header bg-dark text-white py-3 border-0">
+              <h6 class="mb-0 fw-bold d-flex align-items-center gap-2">🔧 Technician Verification Queue</h6>
             </div>
-            <div class="card-footer text-muted bg-light small">
-              Ordered: {{ new Date(order.dateOrdered).toLocaleString() }}
+            
+            <div class="list-group list-group-flush max-sidebar-height overflow-auto">
+              <div v-if="installers.length === 0" class="p-4 text-center text-muted small bg-light-subtle italic">
+                No active installer registration applications pending.
+              </div>
+              
+              <div 
+                v-for="installer in installers" 
+                :key="'installer-' + (installer._id || installer.id)" 
+                class="list-group-item p-3 d-flex justify-content-between align-items-center bg-white transition-hover"
+              >
+                <div class="text-truncate pe-2">
+                  <h6 class="mb-0 fw-bold text-dark text-truncate small" style="font-size:0.85rem;">{{ installer.name }}</h6>
+                  <small class="text-muted d-block text-truncate font-monospace" style="font-size:0.75rem;">{{ installer.email }}</small>
+                  <span v-if="installer.isApproved" class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 mt-1 font-monospace" style="font-size:0.65rem;">Approved</span>
+                  <span v-else class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0.5 mt-1 font-monospace" style="font-size:0.65rem;">Pending Approval</span>
+                </div>
+                
+                <div class="d-flex gap-1 flex-shrink-0">
+                  <button v-if="!installer.isApproved" class="btn btn-success btn-xs fw-bold px-2 py-1" @click="approveInstaller(installer._id || installer.id)">Approve</button>
+                  <button class="btn btn-outline-danger btn-xs px-2 py-1" @click="deleteInstaller(installer._id || installer.id)">Reject</button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Installer Approvals Section Grid Component -->
-    <div class="card shadow-sm mt-4">
-      <div class="card-header bg-dark text-white">
-        <h5 class="mb-0">Technician Approval Applications</h5>
-      </div>
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="table table-bordered align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Location</th>
-                <th class="text-center">Status</th>
-                <th class="text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="installers.length === 0">
-                <td colspan="5" class="text-center text-muted py-4">No installer registration accounts pending records.</td>
-              </tr>
-              <tr v-for="installer in installers" :key="installer._id">
-                <td>{{ installer.name }}</td>
-                <td>{{ installer.email }}</td>
-                <td>{{ installer.location }}</td>
-                <td class="text-center">
-                  <span v-if="installer.isApproved" class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1">Approved</span>
-                  <span v-else class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-1">Pending</span>
-                </td>
-                <td class="text-center">
-                  <!-- ✅ FIXED HTML: Placed both buttons inside a clean unified bootstrap flex container -->
-                  <div class="d-flex justify-content-center gap-2">
-                    <button v-if="!installer.isApproved" class="btn btn-success btn-sm px-3" @click="approveInstaller(installer._id)">
-                      Approve
-                    </button>
-                    <button v-if="!installer.isApproved" class="btn btn-danger btn-sm px-3" @click="deleteInstaller(installer._id)">
-                      Reject
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <!-- PANEL B: ALL CUSTOMERS DIRECTORY SIDEBAR -->
+          <div class="card border-0 shadow-sm rounded-3 bg-white overflow-hidden">
+            <div class="card-header bg-dark text-white py-3 border-0">
+              <h6 class="mb-0 fw-bold d-flex align-items-center gap-2">👤 Platform Client Directory</h6>
+            </div>
+            
+            <div class="list-group list-group-flush max-sidebar-height overflow-auto">
+              <div v-if="loading" class="p-4 text-center text-muted small">
+                <span class="spinner-border spinner-border-sm text-primary me-2"></span>Syncing user list records...
+              </div>
+              <div v-else-if="users.length === 0" class="p-4 text-center text-muted small bg-light-subtle italic">
+                No customer user accounts registered.
+              </div>
+              
+              <div 
+                v-for="user in users" 
+                :key="'user-' + user._id" 
+                class="list-group-item p-3 d-flex justify-content-between align-items-center bg-white transition-hover"
+                :class="{ 'bg-primary-subtle border-start border-primary border-3 shadow-xs': selectedUser?._id === user._id }"
+              >
+                <div class="text-truncate pe-2">
+                  <h6 class="mb-0 fw-bold text-dark text-truncate small" style="font-size:0.85rem;">{{ user.name }}</h6>
+                  <small class="text-muted font-monospace d-block text-truncate" style="font-size:0.75rem;">{{ user.email }}</small>
+                </div>
+                <button class="btn btn-primary btn-xs fw-semibold px-3 py-1 flex-shrink-0 rounded-pill shadow-xs" @click="fetchOrders(user)">
+                  Orders &rarr;
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- STANDALONE CHILD SERVICE DISPUTES COMPONENT WORKSPACE CONTAINER -->
+          <InstallerDisputesPanel :baseURL="baseURL" />
+
         </div>
+        <!-- ========================================================================= -->
+        <!-- 📦 RIGHT MAIN VIEW PANEL COLUMN: DRILLDOWN OPERATIONS FOR CHOSEN CUSTOMER -->
+        <!-- ========================================================================= -->
+        <div class="col-xl-8">
+          <div class="card border-0 shadow-sm rounded-3 bg-white h-100 overflow-hidden">
+            
+            <div class="card-header bg-secondary text-white py-3 border-0 d-flex justify-content-between align-items-center">
+              <h6 class="mb-0 fw-bold d-flex align-items-center gap-2">📦 Product Invoices Operations Hub</h6>
+              <span v-if="selectedUser" class="badge bg-white text-secondary font-monospace fw-bold px-2.5 py-1 rounded-pill shadow-xs small">{{ selectedUser.name }}</span>
+            </div>
+
+            <div class="card-body p-4 max-main-height overflow-auto">
+              <!-- Case Fallback Boundary Element Condition: Prompt user to choose a target client parameter profile -->
+              <div v-if="!selectedOrders.length" class="text-center py-5 my-5 text-muted">
+                <span class="fs-1 d-block mb-3">📋</span>
+                <h6 class="fw-bold text-dark">No Client Marketplace File Open</h6>
+                <p class="small text-muted max-w-350 mx-auto mt-1">Select the blue "Orders &rarr;" button next to an individual client card in the directory list to load their data logs.</p>
+              </div>
+
+              <!-- Case Conditional Execution: Renders chosen data arrays smoothly -->
+              <div v-else class="d-flex flex-column gap-4 animate-fade-in">
+                <h5 class="fw-bold text-dark small font-monospace text-uppercase tracking-wider">Purchase Logs Folder for: <span class="text-primary text-lowercase">{{ selectedUser?.email }}</span></h5>
+                
+                <!-- RESTORED MARKETPLACE DATA PROCESSING GRID TABLE -->
+                <div class="table-responsive border rounded-3 shadow-xs">
+                  <table class="table table-hover align-middle mb-0 text-secondary">
+                    <thead class="table-dark text-uppercase font-monospace small" style="font-size: 0.72rem;">
+                      <tr>
+                        <th class="ps-3">Shipping Target</th>
+                        <th>Phone</th>
+                        <th>Progress Status</th>
+                        <th>Conf</th>
+                        <th>Assigned Tech</th>
+                        <th>Service Fee</th>
+                        <th>Paystack Escrow</th>
+                        <th class="pe-3 text-end">Action Controls</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="order in selectedOrders" :key="'table-' + order._id" class="bg-white">
+                        <td class="ps-3 fw-medium text-dark text-truncate small" style="max-width: 140px;" :title="order.shippingAddress1">
+                          {{ order.shippingAddress1 }}
+                        </td>
+                        <td class="small font-monospace text-nowrap">{{ order.phone }}</td>
+                        
+                        <!-- 3. LIFECYCLE MANAGEMENT DROP DOWN DROPDOWN -->
+                        <td>
+                          <select v-model="order.status" class="form-select form-select-xs fw-semibold font-monospace" @change="updateStatus(order)">
+                            <option>Pending</option>
+                            <option>Processing</option>
+                            <option>Shipped</option>
+                            <option>Delivered</option>
+                            <option v-if="order.status === 'Confirmed'">Confirmed</option>
+                          </select>
+                        </td>
+
+                        <!-- 4. ORDER VERIFICATION SYNC MARKER -->
+                        <td class="text-nowrap">
+                          <span v-if="order.isConfirmed" class="text-success small fw-bold font-monospace">✔ OK</span>
+                          <span v-else class="text-warning small font-monospace">Hold</span>
+                        </td>
+
+                        <!-- 5. ASSIGNED TECH FIELD REFERENCE OBJECTS -->
+                        <td class="text-truncate small" style="max-width: 110px;" :title="order.assignedInstaller?.name">
+                          <strong v-if="order.assignedInstaller" class="text-dark">{{ order.assignedInstaller.name }}</strong>
+                          <span v-else class="text-muted small text-italic">Hardware-Only</span>
+                        </td>
+
+                        <!-- 6. SERVICE VALUATION PARSING METRICS -->
+                        <td class="small font-monospace text-nowrap fw-semibold text-dark">
+                          {{ order.installationFee > 0 ? '₦' + order.installationFee.toLocaleString() : '-' }}
+                        </td>
+
+                        <!-- 7. PAYSTACK LEDGER AUDITING BADGES -->
+                        <td>
+                          <span v-if="order.installerPayoutStatus === 'paid'" class="badge bg-success-subtle text-success border font-monospace text-uppercase" style="font-size: 0.65rem;">Settled</span>
+                          <span v-else-if="order.installerPayoutStatus === 'pending'" class="badge bg-warning-subtle text-warning-emphasis border font-monospace text-uppercase" style="font-size: 0.65rem;">Escrowed</span>
+                          <span v-else class="badge bg-light text-muted border font-monospace text-uppercase" style="font-size: 0.65rem;">N/A</span>
+                        </td>
+
+                        <!-- 8. OPERATIONAL PIPELINE ACTIONS ENGINE -->
+                        <td class="pe-3 text-end text-nowrap">
+                          <div class="d-flex justify-content-end gap-1">
+                            <button class="btn btn-success btn-xs font-monospace fw-semibold" @click="confirmOrder(order)">Confirm</button>
+                            <button v-if="order.installerPayoutStatus === 'pending' && order.status === 'Delivered'" class="btn btn-primary btn-xs font-monospace fw-bold shadow-xs px-2" @click="payoutInstallerFunds(order._id)">💸 Pay Tech</button>
+                            <button class="btn btn-info btn-xs text-white" @click="openWhatsApp(order)"><i class="bi bi-whatsapp"></i></button>
+                            <button class="btn btn-outline-danger btn-xs" @click="deleteOrder(order._id)"><i class="bi bi-trash-fill"></i></button>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- CARDS VIEW GRID SUBSECTION: INVOICED COMPONENT LINE ITEMS BREAKDOWNS -->
+                <div class="row g-3">
+                  <div v-for="order in selectedOrders" :key="'card-' + order._id" class="col-md-6">
+                    <div class="card border border-light-subtle h-100 shadow-xs bg-white rounded-3">
+                      <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                          <h6 class="card-title fw-bold text-success mb-0" style="font-size:0.85rem;">Total Value: ₦{{ order.totalPrice?.toLocaleString() || 0 }}</h6>
+                          <button class="btn btn-link p-0 text-decoration-none small text-danger fw-semibold" style="font-size:0.8rem;" @click="deleteOrder(order._id)">Delete Invoice</button>
+                        </div>
+                        
+                        <p class="small font-monospace text-muted mb-2 text-uppercase fw-bold" style="font-size: 0.65rem;">Purchased Manifest Payload:</p>
+                        <ul class="list-group list-group-flush">
+                          <li v-for="item in order.orderItems" :key="item._id" class="list-group-item px-0 py-2 border-light-subtle last-no-border">
+                            <div v-if="item.product" class="d-flex gap-2 align-items-center">
+                              <img :src="item.product.image || '/placeholder.png'" alt="Hardware" class="rounded border object-fit-cover flex-shrink-0" width="45" height="45" />
+                              <div class="text-truncate flex-grow-1" style="font-size:0.75rem;">
+                                <span class="fw-bold text-dark d-block text-truncate mb-0" style="font-size:0.78rem;">{{ item.product.name }}</span>
+                                <span class="text-muted d-block font-monospace">Qty: {{ item.quantity }} | Cat: {{ item.product?.category?.name || 'N/A' }}</span>
+                                <span class="fw-semibold text-primary font-monospace">Unit: ₦{{ item.product.price?.toLocaleString() }}</span>
+                              </div>
+                            </div>
+                            <div v-else class="text-muted small italic p-1">Product reference entity drop array payload missing matching catalog IDs</div>
+                          </li>
+                        </ul>
+                      </div>
+                      <div class="card-footer text-muted bg-light border-0 small font-monospace" style="font-size: 0.7rem;">
+                        Timestamp Ordered: {{ order.dateOrdered ? new Date(order.dateOrdered).toLocaleString() : 'Unindexed' }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 </template>
 
+
+
+
 <script>
 import axios from "axios";
+// Import it cleanly at the top of your dashboard script script file
+import InstallerDisputesPanel from "@/components/InstallerDisputesPanel.vue";
 
 export default {
-  name: "AdminDashboardPanel",
-  props: {
-    baseURL: { type: String, required: true }
-  },
+
+   components: { InstallerDisputesPanel }, // Register it here
+
+  props: ["baseURL"],
+
   data() {
     return {
       users: [],
       installers: [],
-      loading: true,
       selectedOrders: [],
-      selectedUser: null
+      selectedUser: null,
+      loading: true,
+       // 🟢 CRITICAL FIXED PROPERTY: Added to prevent undefined runtime evaluation errors inside methods
+      requests: [] 
     };
   },
-  mounted() {
-    // ✅ Safely runs both initial collection fetches sequentially when admin view mounts
-    this.fetchUsers(); 
-    this.fetchInstallers(); 
-  },
-  methods: {
-    async fetchUsers() {
-      try {
-        const res = await axios.get(`${this.baseURL}users`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        });
-        this.users = res.data;
-      } catch (err) {
-        console.error("Error fetching users:", err);
-      } finally {
-        this.loading = false;
-      }
-    },
-  
-   async fetchInstallers() {
-    console.log("fetchInstallers")
-  try {
-   const token = localStorage.getItem("token"); // 🔐 Must be the Admin's login token
-    
-    const res = await axios.get(`${this.baseURL}installers`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
 
-    this.installers = Array.isArray(res.data) ? res.data : [];
+  mounted() {
+    this.fetchUsers();
+    this.fetchInstallers();
+    this.fetchRequests(); // ✅ IMPORTANT
+  },
+
+  computed: {
+    disputedOrders() {
+      return this.requests.filter((r) => r.dispute?.isOpen);
+    },
+  },
+
+  methods: {
+
+    async releasePayment(id) {
+  const confirm = await this.$swal({
+    title: "Release Payment?",
+    text: "Installer will receive money",
+    icon: "warning",
+    showCancelButton: true
+  });
+
+  if (!confirm.isConfirmed) return;
+
+  try {
+    const token = localStorage.getItem("token");
+
+    await axios.post(
+      `${this.baseURL}payments/release/${id}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    this.$swal("Success", "Installer paid", "success");
+
+    this.fetchRequests();
+
   } catch (err) {
-    console.error("Admin authentication or fetch error:", err.response?.data || err.message);
-    this.installers = []; 
+    this.$swal(
+      "Error",
+      err.response?.data?.message || "Payment failed",
+      "error"
+    );
   }
 },
 
+    async assignInstaller(req) {
+      const installerId = prompt("Enter installer ID");
 
+      await axios.put(
+        `${this.baseURL}requests/${req._id}/assign`,
+        { installerId },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
 
-    async approveInstaller(installerID) {
+      this.fetchRequests();
+    },
+
+    async markCompleted(id) {
+      await axios.put(
+        `${this.baseURL}requests/${id}/complete`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      this.fetchRequests();
+    },
+
+    async payInstaller(id) {
+      await axios.post(
+        `${this.baseURL}payments/orders/${id}/payout-installer`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      this.fetchRequests();
+    },
+
+    async fetchRequests() {
       try {
+        const res = await axios.get(`${this.baseURL}requests`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        this.requests = res.data;
+      } catch (err) {
+        console.error(err);
+      }
+    },
+
+    async fetchDisputes() {
+      try {
+        const res = await axios.get(`${this.baseURL}requests/disputes`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        this.disputes = res.data;
+      } catch (err) {
+        console.error(err);
+      }
+    },
+
+    async resolveDispute(id, action) {
+      try {
+        const token = localStorage.getItem("token");
+
         await axios.put(
-          `${this.baseURL}installers/${installerID}/approve`,
-          {},
-          { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+          `${this.baseURL}requests/${id}/resolve`,
+          { action }, // "release" or "refund"
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
         );
 
-        this.installers = this.installers.map((i) =>
-          i._id === installerID ? { ...i, isApproved: true } : i
+        this.$swal("Success", "Dispute resolved", "success");
+
+        // ✅ refresh everything
+        this.fetchRequests();
+      } catch (err) {
+        this.$swal(
+          "Error",
+          err.response?.data?.message || "Error resolving dispute",
+          "error",
+        );
+      }
+    },
+
+    viewDispute(request) {
+      this.$swal({
+        title: "Dispute Reason",
+        text: request.dispute?.reason || "No reason provided",
+        icon: "info",
+      });
+    },
+
+    async openDispute(request) {
+      const { value: reason } = await this.$swal({
+        title: "Open Dispute",
+        input: "text",
+        inputPlaceholder: "Enter reason...",
+        inputValidator: (value) => {
+          if (!value) return "Reason is required!";
+        },
+        showCancelButton: true,
+      });
+
+      if (!reason) return;
+
+      try {
+        const token = localStorage.getItem("token");
+
+        await axios.put(
+          `${this.baseURL}requests/${request._id}/dispute`,
+          { reason },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        this.$swal("Success", "Dispute opened!", "success");
+
+        // ✅ refresh UI
+        this.fetchRequests();
+      } catch (err) {
+        this.$swal(
+          "Error",
+          err.response?.data?.message || "Failed to open dispute",
+          "error",
+        );
+      }
+    },
+
+    async fetchInstallers() {
+      console.log("fetchInstallers running...");
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await axios.get(`${this.baseURL}installers`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        this.installers = Array.isArray(res.data) ? res.data : [];
+      } catch (err) {
+        console.error(
+          "Admin authentication or fetch error:",
+          err.response?.data || err.message,
+        );
+        this.installers = [];
+      }
+    },
+
+    async approveInstaller(id) {
+      try {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          alert("Session expired. Please log back in as an administrator.");
+          return;
+        }
+
+        await axios.put(
+          `${this.baseURL}installers/${id}/approve`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
         );
 
         this.$swal({
-          text: "Installer approved!",
-          icon: "success"
+          text: "Technician profile successfully promoted to active installer!",
+          icon: "success",
         });
+
+        await this.fetchInstallers();
       } catch (err) {
-        console.error(err);
-        alert("Failed to process profile authorization update.");
+        console.error("Approval blocked:", err.response?.data || err.message);
+        alert(
+          "Approval Failed: " +
+            (err.response?.data?.message || "Access Denied."),
+        );
       }
     },
 
     async deleteInstaller(id) {
-  // 1. Trigger the SweetAlert confirmation popup layout configuration
-  this.$swal({
-    title: "Are you sure?",
-    text: "You are about to reject and permanently delete this installer profile.",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#dc3545", // Bootstrap Danger Red color hex code
-    cancelButtonColor: "#6c757d",  // Bootstrap Secondary Grey color hex code
-    confirmButtonText: "Yes, reject and delete",
-    cancelButtonText: "Cancel"
-  }).then(async (result) => {
-    // 2. This inner block only executes if the admin clicks the red confirm button
-    if (result.isConfirmed) {
+      this.$swal({
+        title: "Are you sure?",
+        text: "You are about to reject and permanently delete this installer profile.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#dc3545",
+        cancelButtonColor: "#6c757d",
+        confirmButtonText: "Yes, reject and delete",
+        cancelButtonText: "Cancel",
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            const token = localStorage.getItem("token");
+
+            await axios.delete(`${this.baseURL}installers/${id}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+
+            this.installers = this.installers.filter(
+              (i) => i._id !== id && i.id !== id,
+            );
+
+            this.$swal({
+              title: "Deleted!",
+              text: "The installer profile has been completely removed and notified.",
+              icon: "success",
+            });
+          } catch (err) {
+            console.error("Error executing installer profile deletion:", err);
+            this.$swal({
+              title: "Operation Failed",
+              text:
+                err.response?.data?.message ||
+                "Could not process profile removal.",
+              icon: "error",
+            });
+          }
+        }
+      });
+    },
+
+    async fetchUsers() {
       try {
-        const token = localStorage.getItem("token");
-        
-        // Issue the secure DELETE API operation request parameters straight to your backend
-        await axios.delete(`${this.baseURL}installers/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
+        const res = await axios.get(`${this.baseURL}users`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         });
 
-        // Sync and filter the local UI installers array instantly without needing a full page reload
-        this.installers = this.installers.filter((i) => i._id !== id);
-
-        // Display a final success confirmation modal notice window banner
-        this.$swal({
-          title: "Deleted!",
-          text: "The installer profile has been completely removed and notified.",
-          icon: "success"
-        });
-
+        this.users = res.data;
       } catch (err) {
-        console.error("Error executing installer profile deletion:", err);
-        this.$swal({
-          title: "Operation Failed",
-          text: err.response?.data?.message || "Could not process profile removal.",
-          icon: "error"
-        });
-      }
-    }
-  });
-},
-
-
-    async fetchOrders(userId) {
-      this.loading = true;
-      try {
-        const res = await axios.get(
-          `${this.baseURL}orders/get/userorders/${userId}`,
-          { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-        );
-        this.selectedOrders = res.data;
-        this.selectedUser = this.users.find((u) => u.id === userId);
-      } catch (err) {
-        console.error("Error fetching orders:", err);
-        this.selectedOrders = [];
-        this.selectedUser = null;
-        this.$swal({ icon: "warning", text: "No orders found for this user." });
+        console.error(err);
       } finally {
         this.loading = false;
       }
     },
-    async updateStatus(order) {
-      try {
-        await axios.put(
-          `${this.baseURL}orders/${order.id}`,
-          { status: order.status },
-          { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-        );
-        this.$swal({ text: "Order status updated successfully!", icon: "success" });
-      } catch (err) {
-        console.error("Error updating order status:", err);
-        alert("Failed to save state transformation.");
-      }
-    },
-    // ✅ ADDED & CORRRECTED: Your complete delete order function block with "Bearer " prefixing fixed!
-    async deleteOrder(orderId) {
-      if (!confirm("Are you sure you want to delete this order?")) return;
+
+    async fetchOrders(user) {
+      this.selectedUser = user;
 
       try {
-        const token = localStorage.getItem("token");
-        await axios.delete(`${this.baseURL}orders/${orderId}`, {
-          // Fixed by explicitly template string-interpolating Bearer tag formatting rules
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        
-        this.selectedOrders = this.selectedOrders.filter(
-          (order) => order.id !== orderId
+        const res = await axios.get(
+          `${this.baseURL}orders/get/userorders/${user._id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          },
         );
-        
+
+        this.selectedOrders = res.data;
+      } catch (err) {
+        console.error(err);
+      }
+    },
+
+    async payoutInstallerFunds(orderId) {
+      try {
+        const token = localStorage.getItem("token");
+
         this.$swal({
-          text: "Order deleted successfully",
+          title: "Processing Payout",
+          text: "Communicating with Paystack wallet transfer architecture...",
+          allowOutsideClick: false,
+          didOpen: () => {
+            this.$swal.showLoading();
+          },
+        });
+
+        const res = await axios.post(
+          `${this.baseURL}payments/orders/${orderId}/payout-installer`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+
+        this.$swal({
+          title: "Transfer Complete! 💸",
+          text: res.data.message || "Installer has been credited successfully.",
           icon: "success",
         });
+
+        this.fetchDisputes();
       } catch (err) {
-        console.error("Error deleting order:", err);
+        console.error("Manual Transfer Routing Failed:", err);
         this.$swal({
-          text: "Failed to delete order!",
+          title: "Payout Fault",
+          text:
+            err.response?.data?.message ||
+            "Failed to disburse funds. Verify your Paystack balance.",
           icon: "error",
         });
       }
-    }
-  } // Methods block closing bracket
-}; // Export default closing bracket
+    },
+
+    async confirmOrder(order) {
+      try {
+        await axios.put(
+          `${this.baseURL}orders/${order._id}`,
+          {
+            status: "Confirmed",
+            isConfirmed: true,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          },
+        );
+
+        alert("Order confirmed");
+        this.fetchOrders(this.selectedUser);
+      } catch (err) {
+        console.error(err);
+      }
+    },
+
+    // 🟢 RE-INTEGRATED: WhatsApp Dialer handler method
+    openWhatsApp(order) {
+      const phone = order.phone;
+      const message = encodeURIComponent(
+        `Hello ${order.user?.name || "Customer"}, we are confirming your order.`,
+      );
+      window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
+    },
+
+    // 🟢 RE-INTEGRATED: Document Deletion mapper method
+    async deleteOrder(id) {
+      if (!confirm("Delete order?")) return;
+
+      try {
+        await axios.delete(`${this.baseURL}orders/${id}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        this.selectedOrders = this.selectedOrders.filter((o) => o._id !== id);
+      } catch (err) {
+        console.error(err);
+      }
+    },
+
+    // 🟢 RE-INTEGRATED: Status Options dropdown tracker method
+    async updateStatus(order) {
+      try {
+        await axios.put(
+          `${this.baseURL}orders/${order._id}`,
+          { status: order.status },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          },
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    },
+  }, // End of methods block
+}; // End of component options config
 </script>
-
-
-<style></style>

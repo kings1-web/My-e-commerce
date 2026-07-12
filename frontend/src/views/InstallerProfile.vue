@@ -44,9 +44,7 @@
 
         <!-- Contact CTA Actions Panel Wrapper -->
         <div class="flex-shrink-0 mt-3 mt-md-0 text-center text-md-end min-width-200">
-          
-
-          <!-- 🟢 CASE A: Customer has NOT sent an installation request yet -->
+          <!-- CASE A: Customer has NOT sent an installation request yet -->
           <button
             v-if="!activeContractRequest"
             type="button"
@@ -56,20 +54,21 @@
             👨‍🔧 Request Installation Setup
           </button>
 
-          <!-- 🟡 CASE B: Request is sent, but technician is still pending (Chat Locked) -->
+          <!-- CASE B: Request is sent, but technician is still pending -->
           <div v-else-if="activeContractRequest.status === 'pending'" class="text-center w-100">
             <button class="btn btn-secondary py-2 px-3 fw-semibold small w-100" disabled>
               ⏳ Request Sent (Pending)
             </button>
-            <small class="text-muted d-block mt-1 italic" style="font-size: 0.72rem;">
+            <small class="text-muted d-block mt-1 text-italic" style="font-size: 0.72rem;">
               Chat unlocks when they accept.
             </small>
           </div>
 
-          <!-- 🔵 CASE C: Technician accepted/quoted (🟢 CHAT ACCESS UNLOCKED) -->
+          <!-- CASE C: Technician accepted/quoted -->
           <div v-else class="w-100">
             <RouterLink
-              :to="{ name: 'WorkspaceChat', params: { requestId: activeContractRequest._id || activeContractRequest.id } }"
+            :to="{ name: 'WorkspaceChat', params: { requestId: activeContractRequest?._id || activeContractRequest?.id || 'error' } }"
+
               class="btn btn-success px-4 py-2 fw-bold shadow-xs text-white d-inline-flex align-items-center gap-2 w-100 justify-content-center"
             >
               💬 Open Secure Chat
@@ -145,7 +144,7 @@
               required
             ></textarea>
             <div class="text-end small text-muted mt-1" style="font-size: 0.75rem">
-              {{ 250 - (comment ? comment.length : 0) }} / 250 characters left
+              {{ 250 - (comment?.length || 0) }} / 250 characters left
             </div>
           </div>
 
@@ -193,39 +192,21 @@
                   class="form-control"
                   rows="3"
                   placeholder="Provide complete street address, apartment number, and city..."
-                  maxlength="150"
                   required
                 ></textarea>
-                <div class="text-end small text-muted mt-1" style="font-size: 0.75rem;">
-                  {{ 150 - (customerAddress ? customerAddress.length : 0) }} characters remaining
-                </div>
               </div>
             </div>
-            
-            <div class="modal-footer bg-light">
-              <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
-              <button
-                type="submit"
-                class="btn btn-primary px-4 fw-bold"
-                :disabled="isProcessingRequest || !customerAddress || customerAddress.trim().length === 0"
-              >
-                <span v-if="isProcessingRequest" class="spinner-border spinner-border-sm me-2"></span>
-                Send Setup Request
-              </button>
+            <div class="modal-footer bg-light border-0">
+              <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-primary fw-bold">Submit Request</button>
             </div>
           </form>
         </div>
       </div>
     </div>
-
-  </div>
-
-  <!-- Main Loader Spinner Layout Fallback Element -->
-  <div v-else class="text-center py-5 my-5 text-muted">
-    <div class="spinner-border text-primary mb-3" role="status"></div>
-    <p class="mb-0 small">Retrieving technical operational log data files...</p>
   </div>
 </template>
+
 <script>
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
@@ -233,7 +214,7 @@ import { useAuthStore } from "@/stores/auth";
 export default {
   name: "InstallerProfileView",
   props: {
-    id: { type: String, required: true }, // Passed directly from route dynamic parameter mappings
+    id: { type: String, required: true }, 
     baseURL: { type: String, default: "http://localhost:3000/api/v1/" },
   },
   data() {
@@ -243,116 +224,121 @@ export default {
       rating: 0,
       comment: "",
       isSubmitting: false,
-
-      // 🟢 ADDED: Caches active request rows connecting this customer and this installer
-    activeContractRequest: null 
+      customerAddress: "",        
+      isProcessingRequest: false, 
+      activeContractRequest: null,
+      bsModalInstance: null // Cached modal instance to prevent memory stacking
     };
   },
   async mounted() {
     await this.loadInstallerDetails();
-
-  
-  // 🟢 Fetch matching request profiles between active logged-in user and current profile technician
-  if (this.id) {
-    await this.checkSpecificInstallerRequestStatus();
-  }
+    
+    if (this.id) {
+      await this.checkSpecificInstallerRequestStatus();
+    }
   },
   methods: {
+    async checkSpecificInstallerRequestStatus() {
+      if (!this.authStore.token) return; 
 
-     // 🟢 ADDED METHOD: Queries MongoDB to see if this customer already has a pending/active contract with this installer
-  async checkSpecificInstallerRequestStatus() {
-    if (!this.authStore.token) return; // Skip if visitor is anonymous guest
-
-    try {
-      const customerId = this.authStore.user?.id || this.authStore.user?._id || this.authStore.userId;
-      
-      // Calls a specialized search lookup endpoint on your backend Request router
-      const res = await axios.get(`${this.baseURL}Requests/check-installer-status/${this.id}/${customerId}`, {
-        headers: { Authorization: `Bearer ${this.authStore.token}` }
-      });
-      
-      this.activeContractRequest = res.data || null;
-    } catch (err) {
-      console.error("Error evaluating installer profile request mappings:", err);
-      this.activeContractRequest = null;
-    }
-  },
-
-   openRequestModal() {
-    if (!this.authStore.token) {
-      this.$swal({ text: "Please sign in to your customer account to submit setup requests.", icon: "warning" });
-      this.$router.push('/login');
-      return;
-    }
-
-    // Opens your Bootstrap text form input address fields modal dynamically
-    const modalElement = document.getElementById('productPageAddressModal');
-    if (modalElement) {
-      const bootstrapInstance = window.bootstrap;
-      if (bootstrapInstance && bootstrapInstance.Modal) {
-        const bootstrapModal = new bootstrapInstance.Modal(modalElement);
-        bootstrapModal.show();
+      try {
+        const customerId = this.authStore.user?.id || this.authStore.user?._id || this.authStore.userId;
+        
+        const res = await axios.get(`${this.baseURL}requests/check-installer-status/${this.id}/${customerId}`, {
+          headers: { Authorization: `Bearer ${this.authStore.token}` }
+        });
+        
+        this.activeContractRequest = res.data || null;
+      } catch (err) {
+        console.error("Error evaluating installer profile request mappings:", err);
+        this.activeContractRequest = null;
       }
-    }
-  },
+    },
 
-   // 🟢 UPDATED: Force status re-evaluation after user clicks submit inside your address dialog box
-  async submitSingleInstallerRequest() {
-    const customerId = this.authStore.user?.id || this.authStore.user?._id || this.authStore.userId;
-    if (!customerId) return alert("Customer ID missing.");
-
-    this.isProcessingRequest = true;
-    try {
-      // Pull optional product context variables out of state or route if available
-      const targetProductId = this.$route.params.productId || null;
-
-      await axios.post(`${this.baseURL}Requests/send-to-installer`, {
-        userId: customerId,
-        installerId: this.id, // Current technician profile ID
-        address: this.customerAddress.trim(),
-        productId: targetProductId
-      }, {
-        headers: { Authorization: `Bearer ${this.authStore.token}` }
-      });
-
-      if (this.$refs.closeAddressModalBtn) {
-        this.$refs.closeAddressModalBtn.click();
+    openRequestModal() {
+      if (!this.authStore.token) {
+        this.$swal({ text: "Please sign in to your customer account to submit setup requests.", icon: "warning" });
+        this.$router.push('/login');
+        return;
       }
 
-      this.$swal({ title: "Request Sent! 🚀", icon: "success" });
-      this.customerAddress = "";
+      const modalElement = document.getElementById('productPageAddressModal');
+      if (modalElement) {
+        const bootstrapInstance = window.bootstrap;
+        if (bootstrapInstance && bootstrapInstance.Modal) {
+          // Use existing instance or create a single one safely
+          if (!this.bsModalInstance) {
+            this.bsModalInstance = bootstrapInstance.Modal.getInstance(modalElement) || new bootstrapInstance.Modal(modalElement);
+          }
+          this.bsModalInstance.show();
+        }
+      }
+    },
 
-      // 🟢 RE-REFRESH: Switches the button state instantly to "Request Sent (Pending)"
-      await this.checkSpecificInstallerRequestStatus();
+   async submitSingleInstallerRequest() {
+  const customerId = this.authStore.user?.id || this.authStore.user?._id || this.authStore.userId;
+  // 🟢 EXTRACT PHONE: Pull the contact phone directly from your persistent store memory state
+  const customerPhone = this.authStore.user?.phone || this.authStore.userDetails?.phone;
 
-    } catch (err) {
-      console.error(err);
-      alert("Failed to process installation request transaction.");
-    } finally {
-      this.isProcessingRequest = false;
+  if (!customerId) return alert("Customer ID missing.");
+  
+  // 🟢 SAFETY CHECK: Ensure phone tracking metadata exists before calling the endpoint
+  if (!customerPhone) {
+    return alert("Your profile contact phone number is missing. Please add a phone number to your profile before booking.");
+  }
+
+  if (!this.customerAddress || !this.customerAddress.trim()) {
+    return alert("Please enter a valid installation delivery address.");
+  }
+
+  this.isProcessingRequest = true;
+  try {
+    const targetProductId = this.$route.params.productId || null;
+
+    // 🟢 UPDATED PAYLOAD: Included 'phone' to satisfy Mongoose schema rules
+    await axios.post(`${this.baseURL}requests/send-to-installer`, {
+      userId: customerId,
+      installerId: this.id, 
+      address: this.customerAddress.trim(),
+      phone: customerPhone.trim(), // 👈 FIXED: Sent smoothly to backend
+      productId: targetProductId
+    }, {
+      headers: { Authorization: `Bearer ${this.authStore.token}` }
+    });
+
+    // Safely hide using Bootstrap's JS API instead of a button trigger
+    if (this.bsModalInstance) {
+      this.bsModalInstance.hide();
+    } else if (this.$refs.closeAddressModalBtn) {
+      this.$refs.closeAddressModalBtn.click();
     }
-  },
+
+    this.$swal({ title: "Request Sent! 🚀", icon: "success" });
+    this.customerAddress = "";
+
+    await this.checkSpecificInstallerRequestStatus();
+  } catch (err) {
+    console.error("Frontend Submit Error:", err);
+    alert(err.response?.data?.message || "Failed to process installation request transaction.");
+  } finally {
+    this.isProcessingRequest = false;
+  }
+},
 
 
     async loadInstallerDetails() {
       try {
-        const res = await axios.get(
-          `${this.baseURL}installers/${this.id}/details`,
-        );
+        const res = await axios.get(`${this.baseURL}installers/${this.id}/details`);
         this.installer = res.data;
       } catch (err) {
         console.error("Error pulling installer data attributes:", err);
-        alert(
-          "Failed to populate profile logs configuration file mapping data.",
-        );
+        alert("Failed to populate profile logs configuration file mapping data.");
       }
     },
 
     async submitInstallerReview() {
       if (!this.authStore.token) {
-        alert(
-          "Please sign into your customer portal profile account before rating technician services.",
-        );
+        alert("Please sign into your customer portal profile account before rating technician services.");
         return;
       }
 
@@ -377,7 +363,6 @@ export default {
         this.rating = 0;
         this.comment = "";
 
-        // Refresh detail profiles synchronously
         await this.loadInstallerDetails();
       } catch (err) {
         console.error(err);
@@ -386,6 +371,7 @@ export default {
         this.isSubmitting = false;
       }
     },
+
     getStarClass(avgRating, starIndex) {
       if (avgRating >= starIndex) return "bi bi-star-fill";
       if (avgRating >= starIndex - 0.5) return "bi bi-star-half";

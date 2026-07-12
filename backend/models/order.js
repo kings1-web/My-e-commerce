@@ -1,50 +1,30 @@
 const mongoose = require("mongoose");
 
-const orderSchema = mongoose.Schema({
-  orderItems:[{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "OrderItem",
-      required: true,
-    }],
-  shippingAddress1: {
-    type: String,
-    require: true,
-  },
-  shippingAdress2: {
-    type: String,
-  },
-  city: {
-    type: String,
-    require: true,
-  },
-  zip: {
-    type: String,
-    require: true,
-  },
-  country: {
-    type: String,
-    require: true,
-  },
-  phone: {
-    type: String,
-    require: true,
-  },
-  status: {
-    type: String,
-    require: true,
-    default:"Pending",
-  },
-  totalPrice: {
-    type:Number,
-  },
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-  },
+const orderSchema = new mongoose.Schema({
+  orderItems: [{ type: mongoose.Schema.Types.ObjectId, ref: "OrderItem" }],
+  shippingAddress1: String,
+  shippingAddress2: String,
+  city: String,
+  state: String,
+  zip: String,
+  country: String,
+  phone: String,
+  totalPrice: Number,
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  status: { type: String, default: "pending" },
+  paymentReference: String,
   dateOrdered: {
     type: Date,
     default:Date.now
   },
+  confirmationMessage: {
+  type: String,
+  default: ""
+},
+isConfirmed: {
+  type: Boolean,
+  default: false
+}
 });
 
 orderSchema.virtual("id").get(function () {

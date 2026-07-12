@@ -1,6 +1,8 @@
-
- <template>
+<template>
   <div class="featured-wrapper">
+    <div v-if="products.length === 0" class="text-center py-4">
+      Loading featured products...
+    </div>
 
     <Swiper
       :modules="modules"
@@ -8,18 +10,11 @@
       :space-between="15"
       :breakpoints="breakpoints"
       :autoplay="{ delay: 3000, disableOnInteraction: false }"
-
-      :loop="products.length > 4" 
-  
-       :slides-per-group="1"
-
-
+      :loop="products.length > 1"
+      :slides-per-group="1"
       class="mySwiper"
     >
-      <SwiperSlide
-        v-for="product in products"
-        :key="product.id"
-      >
+      <SwiperSlide v-for="product in products" :key="product.id">
         <div class="product-card">
           <!-- DISCOUNT BADGE -->
           <span
@@ -36,30 +31,38 @@
           </RouterLink>
 
           <div class="card-content">
-            <RouterLink :to="{ name: 'ShowDetails', params: { id: product.id } }">
+            <RouterLink
+              :to="{ name: 'ShowDetails', params: { id: product.id } }"
+            >
               <p class="title">
                 {{ truncate(product.name, 25) }}
               </p>
             </RouterLink>
-     
-<!-- Inside FeaturedCarousel.vue, place this right below the product title RouterLink -->
-<div class="rating-box mb-2">
-  <div class="d-flex align-items-center gap-1">
-    <!-- Star Icons Design Element Mapping -->
-    <span class="stars text-warning small" style="font-size: 0.8rem; color: #ffc107;">
-      <i 
-        v-for="star in 5" 
-        :key="star" 
-        :class="getStarClass(product.averageRating || 0, star)"
-      ></i>
-    </span>
-    <!-- Review Numeric Text Metric -->
-    <span class="text-muted ms-1" style="font-size: 0.75rem;">
-      ({{ product.averageRating ? product.averageRating.toFixed(1) : '0.0' }})
-    </span>
-  </div>
-</div>
 
+            <!-- Inside FeaturedCarousel.vue, place this right below the product title RouterLink -->
+            <div class="rating-box mb-2">
+              <div class="d-flex align-items-center gap-1">
+                <!-- Star Icons Design Element Mapping -->
+                <span
+                  class="stars text-warning small"
+                  style="font-size: 0.8rem; color: #ffc107"
+                >
+                  <i
+                    v-for="star in 5"
+                    :key="star"
+                    :class="getStarClass(product.averageRating || 0, star)"
+                  ></i>
+                </span>
+                <!-- Review Numeric Text Metric -->
+                <span class="text-muted ms-1" style="font-size: 0.75rem">
+                  ({{
+                    product.averageRating
+                      ? product.averageRating.toFixed(1)
+                      : "0.0"
+                  }})
+                </span>
+              </div>
+            </div>
 
             <!-- PRICE -->
             <div class="price-box">
@@ -67,28 +70,27 @@
                 {{ formatPrice(product.price) }}
               </span>
 
-              <span
-                v-if="product.oldPrice"
-                class="old-price"
-              >
+              <span v-if="product.oldPrice" class="old-price">
                 {{ formatPrice(product.oldPrice) }}
               </span>
             </div>
 
             <p class="brand">
-              <strong>Brand:</strong> {{ truncate(product.brand, 15) }}
+              <strong>Brand:</strong>
+              {{ truncate(product.brand || "Unknown", 15) }}
             </p>
 
             <!-- ADMIN ACTIONS -->
-            <div
-              v-if="$route.name === 'AdminProduct'"
-              class="actions"
-            >
-              <RouterLink :to="{ name: 'EditProduct', params: { id: product.id } }">
+            <div v-if="$route.name === 'AdminProduct'" class="actions">
+              <RouterLink
+                :to="{ name: 'EditProduct', params: { id: product.id } }"
+              >
                 <button class="btn edit">Edit</button>
               </RouterLink>
 
-              <RouterLink :to="{ name: 'GalleryUpload', params: { id: product.id } }">
+              <RouterLink
+                :to="{ name: 'GalleryUpload', params: { id: product.id } }"
+              >
                 <button class="btn upload">Upload</button>
               </RouterLink>
 
@@ -139,17 +141,16 @@ export default {
   },
 
   methods: {
-
-     // 🟢 ADDED: Calculates individual star display attributes for your swiper cards
-  getStarClass(avgRating, starIndex) {
-    if (avgRating >= starIndex) {
-      return 'bi bi-star-fill'; // Full star class
-    } else if (avgRating >= starIndex - 0.5) {
-      return 'bi bi-star-half'; // Half star class
-    } else {
-      return 'bi bi-star'; // Empty contour star class
-    }
-  },
+    // 🟢 ADDED: Calculates individual star display attributes for your swiper cards
+    getStarClass(avgRating, starIndex) {
+      if (avgRating >= starIndex) {
+        return "bi bi-star-fill"; // Full star class
+      } else if (avgRating >= starIndex - 0.5) {
+        return "bi bi-star-half"; // Half star class
+      } else {
+        return "bi bi-star"; // Empty contour star class
+      }
+    },
 
     featured() {
       axios
@@ -172,9 +173,7 @@ export default {
 
     truncate(text, length) {
       if (!text) return "";
-      return text.length > length
-        ? text.substring(0, length) + "..."
-        : text;
+      return text.length > length ? text.substring(0, length) + "..." : text;
     },
 
     // 🔥 NEW: DISCOUNT CALCULATION
@@ -205,7 +204,6 @@ export default {
 </script>
 
 <style scoped>
-
 .featured-wrapper {
   margin: 0px 0;
 }
@@ -224,7 +222,7 @@ export default {
   border-radius: 10px;
   overflow: hidden;
   transition: 0.3s;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
 .product-card:hover {
@@ -323,4 +321,3 @@ export default {
   color: #fff;
 }
 </style>
-

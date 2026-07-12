@@ -1,171 +1,99 @@
 <template>
   <div class="container my-5">
     <div class="row justify-content-center">
-      <div class="col-md-8 col-lg-6">
-        <div class="card shadow border-0 p-4">
-          <h3 class="card-title text-center mb-4 fw-bold text-primary">
-            Installer Registration 👨‍🔧
-          </h3>
+      <div class="col-md-6 col-lg-5">
+        <div class="card shadow border-0 p-4 bg-white rounded-3">
+          <div class="text-center mb-4">
+            <h3 class="fw-bold text-dark mb-1">Join as a Professional Installer</h3>
+            <p class="text-muted small">Fill out your details to join our vetted technician marketplace network.</p>
+          </div>
 
-          <form @submit.prevent="handleRegister" enctype="multipart/form-data">
-            <!-- Profile Picture Upload Widget -->
-            <div class="text-center mb-4">
-              <div class="position-relative d-inline-block">
-                <img
-                  :src="imagePreview || '/default-avatar.png'"
-                  alt="Profile Preview"
-                  class="rounded-circle border img-thumbnail object-fit-cover shadow-sm"
-                  style="width: 120px; height: 120px; object-fit: cover"
-                />
-                <button
-                  type="button"
-                  class="btn btn-sm btn-dark position-absolute bottom-0 end-0 rounded-circle"
-                  @click="triggerFileSelect"
-                  style="width: 32px; height: 32px; padding: 0"
-                  title="Upload Photo"
-                >
-                  📸
-                </button>
-              </div>
-              <input
-                type="file"
-                ref="fileInput"
-                @change="onFileSelected"
-                accept="image/*"
-                class="d-none"
-              />
-              <div class="small text-muted mt-2">
-                Upload profile photo (Optional)
-              </div>
-            </div>
-
-            <!-- Name Input -->
+          <form @submit.prevent="handleInstallerRegistration">
+            <!-- Full Name -->
             <div class="mb-3">
-              <label class="form-label fw-semibold">Full Name</label>
-              <input
-                v-model="form.name"
-                type="text"
-                class="form-control"
-                placeholder="John Doe"
-                required
-              />
+              <label class="form-label small fw-semibold text-muted">Full Name</label>
+              <input type="text" v-model="form.name" class="form-control" placeholder="John Doe" required />
             </div>
 
-            <!-- Email Input -->
+            <!-- Email Address -->
             <div class="mb-3">
-              <label class="form-label fw-semibold">Email Address</label>
-              <input
-                v-model="form.email"
-                type="email"
-                class="form-control"
-                placeholder="installer@example.com"
-                required
-              />
+              <label class="form-label small fw-semibold text-muted">Email Address</label>
+              <input type="email" v-model="form.email" class="form-control" placeholder="johndoe@example.com" required />
             </div>
 
-            <!-- Password Input -->
+            <!-- Phone Number -->
             <div class="mb-3">
-              <label class="form-label fw-semibold">Password</label>
-              <input
-                v-model="form.password"
-                type="password"
-                class="form-control"
-                placeholder="••••••••"
-                required
-              />
+              <label class="form-label small fw-semibold text-muted">Phone Number</label>
+              <input type="tel" v-model="form.phone" class="form-control" placeholder="e.g., +2348012345678" required />
             </div>
 
-            <!-- Phone Input -->
+            <!-- Location/City -->
             <div class="mb-3">
-              <label class="form-label fw-semibold">Phone Number</label>
-              <input
-                v-model="form.phone"
-                type="tel"
-                class="form-control"
-                placeholder="+1 (555) 000-0000"
-                required
-              />
+              <label class="form-label small fw-semibold text-muted">Operating Location / City</label>
+              <input type="text" v-model="form.location" class="form-control" placeholder="e.g., Ikeja, Lagos" required />
             </div>
 
-            <!-- Location Input -->
+            <!-- Skills -->
             <div class="mb-3">
-              <label class="form-label fw-semibold">Location / City</label>
-              <input
-                v-model="form.location"
-                type="text"
-                class="form-control"
-                placeholder="New York, NY"
-                required
-              />
+              <label class="form-label small fw-semibold text-muted">Skills / Specializations</label>
+              <input type="text" v-model="skillsInput" class="form-control" placeholder="e.g., Solar setups, CCTV, Inverters" required />
+              <div class="form-text text-muted" style="font-size: 0.72rem;">Separate skills with commas.</div>
             </div>
 
-            <!-- Dynamic Skills/Tags Input Block -->
+            <!-- 🟢 NEW FIELD: Bank Settlement Dropdown -->
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted">Settlement Bank</label>
+              <select v-model="form.settlementBank" class="form-select" :disabled="loadingBanks" required>
+                <option value="" disabled>Select your bank</option>
+                <option v-for="bank in banksList" :key="bank.id" :value="bank.code">
+                  {{ bank.name }}
+                </option>
+              </select>
+              <div v-if="loadingBanks" class="form-text text-primary small">Fetching active bank network list...</div>
+            </div>
+
+            <!-- 🟢 NEW FIELD: Bank Account Number -->
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted">NUBAN Account Number</label>
+              <input 
+                type="text" 
+                v-model="form.accountNumber" 
+                class="form-control" 
+                placeholder="10-digit Account Number" 
+                maxlength="10"
+                pattern="\d{10}"
+                required 
+              />
+              <div class="form-text text-muted" style="font-size: 0.72rem;">Must be exactly 10 digits.</div>
+            </div>
+
+            <!-- Profile Password -->
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted">Password</label>
+              <input type="password" v-model="form.password" class="form-control" placeholder="••••••••" required />
+            </div>
+
+            <!-- Profile Picture File Upload -->
             <div class="mb-4">
-              <label class="form-label fw-semibold">Skills / Specialties</label>
-              <div class="input-group mb-2">
-                <input
-                  v-model="newSkill"
-                  type="text"
-                  class="form-control"
-                  placeholder="e.g. CCTV, Solar, Electrical"
-                  @keydown.enter.prevent="addSkill"
-                />
-                <button
-                  class="btn btn-outline-secondary"
-                  type="button"
-                  @click="addSkill"
-                >
-                  Add
-                </button>
-              </div>
-              <!-- Bootstrap Badges for tags -->
-              <div class="d-flex flex-wrap gap-2">
-                <span
-                  v-for="(skill, index) in form.skills"
-                  :key="index"
-                  class="badge bg-secondary d-flex align-items-center gap-2 px-3 py-2 fs-7"
-                >
-                  {{ skill }}
-                  <button
-                    type="button"
-                    class="btn-close btn-close-white"
-                    style="font-size: 0.6rem"
-                    @click="removeSkill(index)"
-                  ></button>
-                </span>
-                <div
-                  v-if="form.skills.length === 0"
-                  class="small text-muted italic"
-                >
-                  No skills added yet. Press Enter to add.
-                </div>
+              <label class="form-label small fw-semibold text-muted">Upload Profile Picture</label>
+              <input type="file" ref="imageInput" class="form-control" accept="image/*" @change="handleFileChange" required />
+              
+              <!-- Local preview wrapper -->
+              <div v-if="imagePreview" class="mt-2 text-center">
+                <img :src="imagePreview" class="img-thumbnail rounded-circle object-fit-cover" style="width: 80px; height: 80px;" alt="Preview" />
               </div>
             </div>
 
-            <!-- Form Submission Button -->
-            <div class="d-grid gap-2">
-              <button
-                type="submit"
-                class="btn btn-primary py-2 fw-bold"
-                :disabled="isSubmitting"
-              >
-                <span
-                  v-if="isSubmitting"
-                  class="spinner-border spinner-border-sm me-2"
-                  role="status"
-                ></span>
-                {{
-                  isSubmitting ? "Creating Account..." : "Register as Installer"
-                }}
-              </button>
-              <router-link
-                to="/installer-login"
-                class="btn btn-link text-center text-decoration-none mt-2 small"
-              >
-                Already have an account? Sign In
-              </router-link>
-            </div>
+            <!-- Submit Action Button -->
+            <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-xs" :disabled="isSubmitting || loadingBanks">
+              <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+              Submit Application
+            </button>
           </form>
+          
+          <div class="text-center mt-3">
+            <small class="text-muted">Already have an account? <router-link to="/login" class="text-primary text-decoration-none fw-semibold">Sign In</router-link></small>
+          </div>
         </div>
       </div>
     </div>
@@ -173,90 +101,127 @@
 </template>
 
 <script>
-import { useInstallerStore } from "@/stores/installer";
+import axios from "axios";
 
 export default {
-  name: "InstallerRegister",
- props: {
-    baseURL: { type: String, required: true }
-  },
+  name: "InstallerRegistrationView",
   data() {
     return {
-      store: useInstallerStore(),
-      //baseURL: "http://localhost:3000/api/v1/",
+      baseURL: "http://localhost:3000/api/v1/",
       form: {
         name: "",
         email: "",
-        password: "",
         phone: "",
         location: "",
-        skills: [],
+        settlementBank: "", // 🟢 Captured for Paystack Subaccount
+        accountNumber: "",  // 🟢 Captured for Paystack Subaccount
+        password: ""
       },
-      newSkill: "",
+      skillsInput: "",
       selectedFile: null,
       imagePreview: null,
       isSubmitting: false,
+      banksList: [],       // 🟢 Holds banks returned by Paystack API
+      loadingBanks: false  // 🟢 Status tracker for bank fetch
     };
   },
+  mounted() {
+    // Automatically load all valid payment banks as soon as the page opens
+    this.fetchNigerianBanks();
+  },
   methods: {
-    triggerFileSelect() {
-      this.$refs.fileInput.click();
+    // 🟢 Fetch live, supported banks directly using Paystack's endpoint via proxy or open library
+    async fetchNigerianBanks() {
+      this.loadingBanks = true;
+      try {
+        // Fetch through Paystack API (requires no authentication headers for public bank query lists)
+        const response = await axios.get(`${this.baseURL}payments/banks`); //
+        // Sort alphabetically for clean user browsing layout
+        this.banksList = response.data.data.sort((a, b) => a.name.localeCompare(b.name));
+      } catch (err) {
+        console.error("Failed to load Paystack banks mapping:", err);
+        // Fallback local list array if the server drops connection unexpectedly
+        this.banksList = [
+          { name: "Access Bank", code: "044" },
+          { name: "Ecobank Nigeria", code: "050" },
+          { name: "Fidelity Bank", code: "070" },
+          { name: "First Bank of Nigeria", code: "011" },
+          { name: "First City Monument Bank", code: "214" },
+          { name: "Guaranty Trust Bank", code: "058" },
+          { name: "Moniepoint MFB", code: "50515" },
+          { name: "OPay Digital Services", code: "999992" },
+          { name: "Stanbic IBTC Bank", code: "221" },
+          { name: "Sterling Bank", code: "232" },
+          { name: "United Bank For Africa", code: "033" },
+          { name: "Wema Bank", code: "035" },
+          { name: "Zenith Bank", code: "057" }
+        ];
+      } finally {
+        this.loadingBanks = false;
+      }
     },
-    onFileSelected(event) {
-      const file = event.target.files[0];
+    handleFileChange(e) {
+      const file = e.target.files[0];
       if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+          alert("Max allowed image footprint is 5MB!");
+          this.$refs.imageInput.value = "";
+          return;
+        }
         this.selectedFile = file;
         this.imagePreview = URL.createObjectURL(file);
       }
     },
-    addSkill() {
-      const cleanSkill = this.newSkill.trim();
-      if (cleanSkill && !this.form.skills.includes(cleanSkill)) {
-        this.form.skills.push(cleanSkill);
-        this.newSkill = ""; // Clear input field
-      }
-    },
-    removeSkill(index) {
-      this.form.skills.splice(index, 1);
-    },
-    async handleRegister() {
+    async handleInstallerRegistration() {
       this.isSubmitting = true;
 
-      // Setup Multipart Form Data to handle file transfers cleanly
-      const formData = new FormData();
-      formData.append("name", this.form.name);
-      formData.append("email", this.form.email);
-      formData.append("password", this.form.password);
-      formData.append("phone", this.form.phone);
-      formData.append("location", this.form.location);
-
-      // Append the profile picture file if selected
-      if (this.selectedFile) {
-        formData.append("image", this.selectedFile);
-      }
-
-      // Arrays must be appended element-by-element or stringified for multiform parsing
-      this.form.skills.forEach((skill) => {
-        formData.append("skills[]", skill);
-      });
-
       try {
-        await this.store.register(this.baseURL, formData);
-         this.$swal({
-          text: "Registration successfully",
-          icon: "success",
+        const skillsArray = this.skillsInput.split(",").map(skill => skill.trim()).filter(skill => skill.length > 0);
+
+        const formData = new FormData();
+        formData.append("name", this.form.name);
+        formData.append("email", this.form.email.toLowerCase().trim());
+        formData.append("phone", this.form.phone);
+        formData.append("location", this.form.location);
+        formData.append("password", this.form.password);
+        
+        // 🟢 Append the new routing variables safely to FormData
+        formData.append("settlementBank", this.form.settlementBank);
+        formData.append("accountNumber", this.form.accountNumber);
+        
+        if (this.selectedFile) formData.append("image", this.selectedFile);
+        
+        skillsArray.forEach(skill => formData.append("skills", skill));
+
+        // Sends data directly to your backend endpoint router logic
+        const res = await axios.post(`${this.baseURL}installers/register`, formData, {
+          headers: { "Content-Type": "multipart/form-data" }
         });
-        this.$router.push("/installer-login");
+
+        this.$swal({
+          title: "Application Received! 🎉",
+          text: res.data.message || "Your profile has been submitted for admin review.",
+          icon: "success"
+        });
+
+        this.$router.push("/login");
+
       } catch (err) {
-        const errorMsg = err.response?.data?.message || "Something went wrong.";
-         this.$swal({
-          text: "Registration Fail",
-          icon: "success",
+        console.error("Installer sign up failure:", err);
+        this.$swal({
+          title: "Registration Failed",
+          text: err.response?.data?.message || "Could not complete account creation process.",
+          icon: "error"
         });
       } finally {
         this.isSubmitting = false;
       }
-    },
-  },
+    }
+  }
 };
 </script>
+
+<style scoped>
+.shadow-xs { box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.object-fit-cover { object-fit: cover; }
+</style>

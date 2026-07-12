@@ -99,7 +99,7 @@ const router = createRouter({
       path:'/admin',
       name:'Admin',
       component:Admin,
-      meta:{requiresAdmin:true}
+     meta: { requiresAuth: true, isAdminRoute: true }
     },
       //show detail product
     {
@@ -133,14 +133,22 @@ const router = createRouter({
       component:Failure
     },
     {
+  path: '/verify-payment',
+  name: 'VerifyPayment',
+  component: () => import('@/views/VerifyPayment.vue')
+},
+    {
   path: "/installers",
   component: Installers
 },
 
-    {
-  path: "/installer-register",
-  component: InstallerRegister
+   // Inside your frontend src/router/index.js routes configuration array
+{
+  path: "/become-an-installer",
+  name: "BecomeInstaller",
+  component: () => import("@/views/InstallerRegister.vue")
 },
+
 {
   path: "/installer-login",
   name:InstallerLogin,
@@ -163,7 +171,7 @@ const router = createRouter({
   path: "/installer-dashboard",
   name:"InstallerDashboard",
   component: () => import("@/views/InstallerDashboard.vue"),
-  meta: { requiresInstaller: true }
+  meta: { requiresAuth: true, isInstallerRoute: true } 
 },
 {
   path: "/workspace/chat/:requestId",
@@ -189,7 +197,7 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to, from, next) => {
+/*router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
   const InstallerStore=useInstallerStore();
 
@@ -207,7 +215,48 @@ router.beforeEach((to, from, next) => {
   else {
     next();
   }
+});*/
+
+
+
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore();
+
+  // 🟢 CASE 1: Route requires standard customer/buyer authentication profile context
+  if (to.matched.some(record => record.meta.requiresAuth)) {
+    
+    if (!authStore.token) {
+      // If no token exists at all across your application, kick them to your main login page
+      return next({ name: "Login" });
+    }
+    
+    // 🟢 CASE 2: Route requires specialized INSTALLER role checking boundaries
+    if (to.matched.some(record => record.meta.isInstallerRoute)) {
+      // Check your unified roles array state rather than an old independent token string
+      if (authStore.roles && authStore.roles.includes("installer")) {
+        return next(); // Unblocked access allowed!
+      } else {
+        alert("Access Denied: Your profile accounts lacks approved Technician authorization privileges.");
+        return next({ name: "UserDashboard" }); // Gracefully redirect back to their client dashboard
+      }
+    }
+
+    // 🟢 CASE 3: Route requires specialized ADMIN role checking boundaries
+    if (to.matched.some(record => record.meta.isAdminRoute)) {
+      if (authStore.roles && authStore.roles.includes("admin") || authStore.isAdmin) {
+        return next();
+      } else {
+        alert("Access Denied: Administrative authority clearance required.");
+        return next({ name: "UserDashboard" });
+      }
+    }
+
+    next(); // Pass through cleanly
+  } else {
+    next(); // Public routes bypass completely
+  }
 });
+
 
 
 

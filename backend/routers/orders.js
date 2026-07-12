@@ -8,6 +8,41 @@ const baseURL="";
 
 
 
+router.get("/", async (req, res) => {
+  if (!req.auth.isAdmin) {
+    return res.status(403).json({ message: "Admin only" });
+  }
+
+  const orders = await Order.find()
+    .populate("user", "name email")
+    .sort({ dateOrdered: -1 });
+
+  res.send(orders);
+});
+
+router.get("/get/userorders", async (req, res) => {
+  try {
+    console.log("TOKEN USER:", req.auth.userId);
+
+    const orders = await Order.find({
+      user: req.auth.userId, // ✅ ALWAYS CORRECT
+    })
+      .populate("user", "name email")
+      .populate({
+        path: "orderItems",
+        populate: {
+          path: "product",
+          populate: { path: "category", select: "name" },
+        },
+      })
+      .sort({ dateOrdered: -1 });
+
+    res.send(orders);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 
 router.get("/", async (req, res) => {
   const orderList = await Order.find().populate('user','name email')
@@ -49,20 +84,12 @@ router.get("/:id", async (req, res) => {
 });
 
 // step 1:calculate total and create orderItem
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const orderItemsIds = await Promise.all(
       req.body.orderItems.map(async (item) => {
-        let productId;
-
-        // Ensure the product ID is present
-        if (typeof item.product === 'object' && item.product._id) {
-          productId = item.product._id;
-        } else if (item._id) {
-          productId = item._id;
-        } else {
-          throw new Error("Missing product ID in order item");
-        }
+        const productId =
+          item.product?._id || item.product || item._id;
 
         const newOrderItem = new OrderItem({
           quantity: item.quantity,
@@ -73,34 +100,47 @@ router.post('/', async (req, res) => {
       })
     );
 
-    // Step 2: Calculate total price
+    // ✅ Calculate total from DB (SECURE)
     const totalPrices = await Promise.all(
-      orderItemsIds.map(async (orderItemId) => {
-        const orderItem = await OrderItem.findById(orderItemId).populate("product");
-
-        if (!orderItem || !orderItem.product) {
-          throw new Error("Order item or product not found");
-        }
-
-        return orderItem.product.price * orderItem.quantity;
+      orderItemsIds.map(async (id) => {
+        const item = await OrderItem.findById(id).populate("product");
+        return item.product.price * item.quantity;
       })
     );
 
     const totalPrice = totalPrices.reduce((a, b) => a + b, 0);
 
-    return res.json({
-      success: true,
+    // ✅ Create order (PENDING)
+    const order = new Order({
       orderItems: orderItemsIds,
-      totalPrice: totalPrice,
+      shippingAddress1: req.body.shippingAddress1,
+      shippingAddress2: req.body.shippingAddress2,
+      city: req.body.city,
+      zip: req.body.zip,
+      country: req.body.country,
+      phone: req.body.phone,
+      status: "pending",
+      totalPrice,
+      user: req.auth.userId,
+    });
+
+    const savedOrder = await order.save();
+
+    res.json({
+      success: true,
+      orderId: savedOrder._id,
+      totalPrice,
     });
   } catch (err) {
-    console.error("Order creation error:", err);
-    res.status(500).json({ success: false, message: "Could not create order" });
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Order creation failed",
+    });
   }
 });
 
-// Step 2: Verify Transaction (GET /api/v1/orders/verify/:ref)
-router.get('/verify/:ref', async (req, res) => {
+router.get("/verify/:ref", async (req, res) => {
   try {
     const response = await axios.get(
       `https://api.paystack.co/transaction/verify/${req.params.ref}`,
@@ -113,34 +153,51 @@ router.get('/verify/:ref', async (req, res) => {
 
     const data = response.data.data;
 
-    if (data.status === "success") {
-      const meta = data.metadata;
-
-      // Create order using the metadata from Paystack
-      const order = new Order({
-        orderItems: meta.orderItems,
-        shippingAddress1: meta.shipping.shippingAddress1,
-        shippingAddress2: meta.shipping.shippingAddress2,
-        city: meta.shipping.city,
-        zip: meta.shipping.zip,
-        country: meta.shipping.country,
-        phone: meta.shipping.phone,
-        status: "paid",  // Update the order status to "paid"
-        totalPrice: meta.totalPrice,
-        user: meta.user,
-      });
-
-      const savedOrder = await order.save();
-      return res.json({ success: true, order: savedOrder });
+    if (data.status !== "success") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Payment failed" });
     }
 
-    res.status(400).json({ success: false, message: "Payment not successful" });
+    const orderId = data.metadata.orderId;
+
+    // ✅ Find existing order
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+    }
+
+    // ✅ Verify amount (SECURITY)
+    const paidAmount = data.amount / 100;
+
+    if (paidAmount !== order.totalPrice) {
+      return res.status(400).json({
+        success: false,
+        message: "Amount mismatch",
+      });
+    }
+
+    // ✅ Update order
+    order.status = "paid";
+    order.transactionRef = req.params.ref;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      order,
+    });
   } catch (err) {
-    console.error("Verification failed:", err);
-    res.status(500).json({ success: false, message: "Error verifying payment" });
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Verification error",
+    });
   }
 });
-
  
 
 router.put("/:id", async (req, res) => {
@@ -214,9 +271,11 @@ router.delete("/:id", (req, res) => {
       })
       .sort({ dateOrdered: -1 });
 
+      // 🟢 OPTIMIZED: Return an empty array instead of throwing a scary 404 error
     if (!userOrderList || userOrderList.length === 0) {
-  return res.status(404).json({ success: false, message: 'No orders found' });
-}
+      return res.status(200).json([]);
+    }
+
 
 
     res.status(200).send(userOrderList);
@@ -226,14 +285,21 @@ router.delete("/:id", (req, res) => {
   }
 });
 
-
-router.post('/cod', async (req, res) => {
+ 
+ router.post("/cod", async (req, res) => {
   try {
+    if (!req.auth || !req.auth.userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     const orderItemsIds = await Promise.all(
       req.body.orderItems.map(async (item) => {
+        const productId =
+          item.product?._id || item.product || item._id;
+
         const newOrderItem = new OrderItem({
           quantity: item.quantity,
-          product: item.product._id || item._id,
+          product: productId,
         });
 
         return (await newOrderItem.save())._id;
@@ -241,8 +307,8 @@ router.post('/cod', async (req, res) => {
     );
 
     const totalPrices = await Promise.all(
-      orderItemsIds.map(async (orderItemId) => {
-        const orderItem = await OrderItem.findById(orderItemId).populate("product");
+      orderItemsIds.map(async (id) => {
+        const orderItem = await OrderItem.findById(id).populate("product");
         return orderItem.product.price * orderItem.quantity;
       })
     );
@@ -252,25 +318,32 @@ router.post('/cod', async (req, res) => {
     const order = new Order({
       orderItems: orderItemsIds,
       shippingAddress1: req.body.shippingAddress1,
-      shippingAddress2: req.body.shippingAddress2,
       city: req.body.city,
       zip: req.body.zip,
       country: req.body.country,
       phone: req.body.phone,
-      user: req.body.user,
+      user: req.auth.userId,
       totalPrice,
-      status: "pending", // 👈 IMPORTANT (not paid yet)
+      status: "Awaiting Confirmation", // 👈 NEW STATUS
+      confirmationMessage: req.body.confirmationMessage, // 👈 from frontend
+      isConfirmed: false,
     });
 
     const savedOrder = await order.save();
 
-    res.json({ success: true, order: savedOrder });
+    res.json({
+      success: true,
+      message: "Order placed. Awaiting confirmation.",
+      order: savedOrder,
+    });
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: "COD order failed" });
+    res.status(500).json({ message: err.message });
   }
 });
+
+
 
 
 module.exports = router;

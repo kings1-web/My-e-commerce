@@ -26,6 +26,23 @@ const installerSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  // User Schema updates (add these fields to your existing schema)
+settlementBank: {
+   type: String,
+   required:true 
+  }, // Bank Code (e.g., '057')
+  recipientCode: {
+  type: String,
+  default: ""
+},
+accountNumber: {
+   type: String,
+   required:true
+  },
+paystackSubaccount: {
+   type: String,
+   required:true 
+  }, // Saved after Paystack onboarding
   location: {
     type: String,
     required: true, // ✅ Fixed typo from require to required

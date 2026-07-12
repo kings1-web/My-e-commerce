@@ -67,17 +67,15 @@ export default {
   props: {
     requestId: { type: String, required: true },
     baseURL: { type: String, required: true }
-
   },
    
   data() {
     return {
       authStore: useAuthStore(),
       installerStore: useInstallerStore(),
-      //baseURL: "http://localhost:3000/api/v1/",
       currentUserId: null,
       senderModel: "",
-      requestData: null // 🟢 Local cache state tracks live status attributes
+      requestData: null, // 🟢 Local cache state tracks live status attributes
     };
   },
   computed: {
@@ -92,16 +90,29 @@ export default {
     }
   },
   async mounted() {
+    console.log("Request ID from prop:", this.requestId);
+
+    if (!this.requestId) {
+      console.error("requestId prop is missing");
+      return;
+    }
+    
     this.determineUserIdentityContext();
     await this.fetchLiveRequestStatus();
+
+    // 🟢 NEW FLOW: Check if the user was just redirected back after a Paystack checkout completion
+    const transactionRef = this.$route.query.reference;
+    if (transactionRef) {
+      await this.verifyCustomerPayment(transactionRef);
+    }
   },
   methods: {
     determineUserIdentityContext() {
       if (this.installerStore.token) {
-        this.currentUserId = this.installerStore.installer?.id || this.installerStore.installer?._id;
+        this.currentUserId = this.installerStore.installer?.id || this.installerStore.userId;
         this.senderModel = "Installer";
       } else if (this.authStore.token) {
-        this.currentUserId = this.authStore.user?.id || this.authStore.user?._id;
+        this.currentUserId = this.authStore.user?.id || this.authStore.userId;
         this.senderModel = "User";
       } else {
         alert("Unauthorized access. Please log in first.");
@@ -110,13 +121,50 @@ export default {
     },
     // 🟢 Pull current contract request state parameters straight out of MongoDB
     async fetchLiveRequestStatus() {
+       if (!this.requestId) return;
+
       try {
-        const res = await axios.get(`${this.baseURL}Requests/${this.requestId}`, {
+        const res = await axios.get(`${this.baseURL}requests/${this.requestId}`, {
           headers: { Authorization: `Bearer ${this.activeToken}` }
         });
         this.requestData = res.data;
       } catch (err) {
         console.error("Workspace status sync failure:", err);
+      }
+    },
+    // 🟢 NEW METHOD: Submits transaction parameter reference tags straight to backend verify endpoints
+    async verifyCustomerPayment(reference) {
+      try {
+        // Trigger a loading overlay state during the API callback check
+        this.$swal({
+          title: "Confirming Milestone Funding",
+          text: "Verifying secure payment settlement with Paystack API network...",
+          allowOutsideClick: false,
+          didOpen: () => { this.$swal.showLoading(); }
+        });
+
+        // Hit the GET /verify endpoint we built on the payments router file layout
+        const res = await axios.get(`${this.baseURL}payments/verify/${reference}`);
+
+        this.$swal({
+          title: "Milestone Funded! 🛡️",
+          text: res.data.message || "Your installation contract is held securely in escrow. The technician has been cleared to proceed.",
+          icon: "success"
+        });
+
+        // Clean query parameters from URL string so it doesn't trigger again if page reloads
+        this.$router.replace({ query: null });
+        
+        // Refresh local cache metrics cleanly to sync status updates across widgets
+        await this.fetchLiveRequestStatus();
+
+      } catch (err) {
+        console.error("Verification sequence failed:", err);
+        this.$swal({
+          title: "Verification Failed",
+          text: err.response?.data?.message || "Could not confirm secure escrow funding status parameters.",
+          icon: "error"
+        });
       }
     },
     // Triggered when subcomponents tell the page that a state transaction occurred

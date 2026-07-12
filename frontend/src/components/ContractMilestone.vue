@@ -1,11 +1,12 @@
 <template>
-  <div class="card shadow border-0 mb-4">
+  <!-- 🟢 FIXED: Guard moved to the root div to prevent 'Cannot read properties of null (reading status)' -->
+  <div class="card shadow border-0 mb-4" v-if="requestData">
     <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
       <h6 class="mb-0 fw-bold">💼 Contract Status & Milestone Summary</h6>
       <span :class="getMilestoneBadgeClass(requestData.status)">{{ requestData.status }}</span>
     </div>
     
-    <div class="card-body p-4" v-if="requestData">
+    <div class="card-body p-4">
       <!-- Overview Meta Rows -->
       <div class="row g-3 text-sm border-bottom pb-3 mb-3 text-secondary">
         <div class="col-sm-6">
@@ -82,8 +83,13 @@
           <p class="mb-0 fw-bold">Job complete! Payments have been released cleanly to the technician. Thank you for using our platform!</p>
         </div>
       </div>
-
     </div>
+  </div>
+  
+  <!-- Loader Fallback Skeleton UI Component Block -->
+  <div v-else class="card p-5 text-center text-muted border-0 shadow-sm">
+    <div class="spinner-border spinner-border-sm text-secondary mx-auto mb-2"></div>
+    <span class="small">Syncing live milestone parameters...</span>
   </div>
 </template>
 
@@ -102,13 +108,13 @@ export default {
     return {
       authStore: useAuthStore(),
       installerStore: useInstallerStore(),
-      requestData: {},
+      requestData: null,
       localQuotePrice: null,
       isProcessing: false
     };
   },
   computed: {
-    // 🟢 Identifies if the logged-in user is the installer or the client
+    // Identifies if the logged-in user is the installer or the client
     isUserAnInstaller() {
       return !!this.installerStore.token; 
     },
@@ -121,15 +127,14 @@ export default {
     await this.fetchContractDetails();
   },
   methods: {
+    // 🟢 FIXED: Lowercase API routes to prevent 404 routing mismatches
     async fetchContractDetails() {
       try {
-        // Reads specific data from your request model via target endpoints mapping bounds
-        // (Assumes a simple query endpoint to look up single documents by parameter)
-        const res = await axios.get(`${this.baseURL}Requests/${this.requestId}`, {
+        const res = await axios.get(`${this.baseURL}requests/${this.requestId}`, {
           headers: { Authorization: `Bearer ${this.activeToken}` }
         });
         this.requestData = res.data;
-        if (this.requestData.priceQuote) {
+        if (this.requestData?.priceQuote) {
           this.localQuotePrice = this.requestData.priceQuote;
         }
       } catch (err) {
@@ -139,10 +144,12 @@ export default {
 
     // 1. Installer submits their charge quote
     async submitPriceQuote() {
-      if (!this.localQuotePrice || this.localQuotePrice <= 0) return alert("Please enter a valid price quote.");
+      if (!this.localQuotePrice || this.localQuotePrice <= 1000) {
+        return alert("Please enter a valid price quote above ₦1,000.");
+      }
       this.isProcessing = true;
       try {
-        await axios.put(`${this.baseURL}Requests/${this.requestId}/quote`, {
+        await axios.put(`${this.baseURL}requests/${this.requestId}/quote`, {
           priceQuote: this.localQuotePrice
         }, {
           headers: { Authorization: `Bearer ${this.activeToken}` }
@@ -152,89 +159,88 @@ export default {
         await this.fetchContractDetails();
       } catch (err) {
         console.error(err);
-        alert("Failed to submit price quote.");
+        alert("Failed to submit price quote: " + (err.response?.data?.message || err.message));
       } finally {
         this.isProcessing = false;
       }
     },
 
-    // 2. Customer funds the contract milestone
-   // Inside src/components/ContractMilestone.vue -> methods
-async fundContractEscrow() {
-  // 1. Safety Guard: Enforce numerical calculation data boundary parameters
-  if (!this.requestData.priceQuote || this.requestData.priceQuote <= 0) {
-    return alert("Cannot fund a milestone without an active price quote amount.");
-  }
-
-  this.isProcessing = true;
-
-  try {
-    // 2. Extract your Paystack Public API Key out of Vite environment variables cache safely
-    const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_your_fallback_key_here";
-    const customerEmail = this.authStore.email || "buyer@royalgoods.com";
-    
-    // Paystack takes calculations formatted cleanly inside raw Kobo parameters (Naira * 100)
-    const amountInKobo = this.requestData.priceQuote * 100; 
-
-    // 3. Initialize the native browser window Paystack module instance handler
-    const handler = window.PaystackPop.setup({
-      key: publicKey,
-      email: customerEmail,
-      amount: amountInKobo,
-      currency: "NGN",
-      ref: "ESCROW_PAY_" + Math.floor((Math.random() * 1000000000) + 1), // Generates a unique transaction reference
-      
-      // 🟢 CALLBACK A: Fired instantly when the customer executes a successful bank transaction
-      callback: async (response) => {
-        try {
-          alert("Payment received by Paystack network portal! Securing escrow allocation...");
-
-          // Ship the tracking references straight to your backend route to verify and fund the contract
-          const verificationResult = await axios.post(`${this.baseURL}Requests/${this.requestId}/fund`, {
-            paymentIntentId: response.reference // Passes Paystack's transaction reference code
-          }, {
-            headers: { Authorization: `Bearer ${this.activeToken}` }
-          });
-
-          alert("🎉 Milestone Secured! Status updated dynamically across full-stack dashboard workspace logs.");
-          
-          // Emit a reactive event up to WorkspaceChat.vue to instantly unlock the chat screen bubble interfaces
-          this.$emit("status-updated");
-          await this.fetchContractDetails();
-
-        } catch (backendErr) {
-          console.error("Backend escrow validation failure:", backendErr);
-          alert("Payment went through but server failed to update milestone status. Contact Support with Reference: " + response.reference);
-        } finally {
-          this.isProcessing = false;
-        }
-      },
-
-      // 🔴 CALLBACK B: Fired if the customer manually cancels out or shuts the overlay window screen
-      onClose: () => {
-        this.isProcessing = false;
-        alert("Transaction cancelled. Your funds have not been drawn from escrow milestone blocks.");
+    // 2. Customer funds the contract milestone via Paystack
+    async fundContractEscrow() {
+      if (!this.requestData?.priceQuote || this.requestData.priceQuote <= 0) {
+        return alert("Cannot fund a milestone without an active price quote amount.");
       }
-    });
 
-    // 4. Trigger the checkout window popup overlay container layout on user viewport
-    handler.openIframe();
+      this.isProcessing = true;
+      // 🟢 FIXED: Create a local scope reference snapshot to prevent Paystack execution crashes
+      const self = this;
 
-  } catch (err) {
-    console.error("Paystack initialization crash runtime exception logs:", err);
-    alert("Could not load Paystack payment systems gateway components.");
-    this.isProcessing = false;
-  }
-},
+      try {
+        const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_your_fallback_key_here";
+        
+        // 🟢 FIXED: Added safety fallback mapping to capture inner nested store fields cleanly
+        const customerEmail = this.authStore.user?.email || this.authStore.email || "buyer@royalgoods.com";
+        const amountInKobo = this.requestData.priceQuote * 100; 
+
+        if (!window.PaystackPop) {
+          throw new Error("Paystack SDK not loaded on client viewport script bundles.");
+        }
+
+        const handler = window.PaystackPop.setup({
+          key: publicKey,
+          email: customerEmail,
+          amount: amountInKobo,
+          currency: "NGN",
+          ref: "ESCROW_PAY_" + Math.floor((Math.random() * 1000000000) + 1),
+          
+          callback: async (response) => {
+            try {
+              alert("Payment received by Paystack network portal! Securing escrow allocation...");
+
+              // 🟢 FIXED: Target 'self' and use lowercase path structures cleanly
+              await axios.post(`${self.baseURL}requests/${self.requestId}/fund`, {
+                paymentIntentId: response.reference 
+              }, {
+                headers: { Authorization: `Bearer ${self.activeToken}` }
+              });
+
+              alert("🎉 Milestone Secured! Status updated dynamically across dashboard logs.");
+              
+              self.$emit("status-updated");
+              await self.fetchContractDetails();
+
+            } catch (backendErr) {
+              console.error("Backend escrow validation failure:", backendErr);
+              alert("Payment went through but server failed to update milestone status. Reference code: " + response.reference);
+            } finally {
+              self.isProcessing = false;
+            }
+          },
+          onClose: () => {
+            self.isProcessing = false;
+            alert("Transaction cancelled. Your funds have not been drawn.");
+          }
+        });
+
+        handler.openIframe();
+
+      } catch (err) {
+        console.error("Paystack initialization crash runtime exception logs:", err);
+        alert("Could not load Paystack payment systems gateway components.");
+        this.isProcessing = false;
+      }
+    },
 
     // 3. Customer approves work completion and releases funds
     async releaseEscrowFunds() {
       if (!confirm("Are you completely satisfied with the installation quality? Clicking confirm releases the payment to the technician permanently.")) return;
       this.isProcessing = true;
       try {
-        await axios.put(`${this.baseURL}Requests/${this.requestId}/release`, {}, {
+        await axios.put(`${this.baseURL}requests/${this.requestId}/release`, {}, {
           headers: { Authorization: `Bearer ${this.activeToken}` }
         });
+        
+        this.$emit("status-updated");
         alert("Funds released completely! The installer has been credited.");
         await this.fetchContractDetails();
       } catch (err) {
@@ -252,11 +258,12 @@ async fundContractEscrow() {
 
     getMilestoneBadgeClass(status) {
       const base = "badge uppercase font-monospace ";
-      if (status === 'released' || status === 'completed') return base + "bg-success";
-      if (status === 'funded') return base + "bg-primary";
+      if (status === 'released' || status === 'completed') return base + "bg-success text-white";
+      if (status === 'funded') return base + "bg-primary text-white";
       if (status === 'quoted') return base + "bg-info text-dark";
       return base + "bg-warning text-dark";
     }
   }
 };
 </script>
+

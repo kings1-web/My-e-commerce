@@ -3,25 +3,28 @@ const mongoose = require("mongoose");
 const userSchema = mongoose.Schema({
   name: {
     type: String,
-    require: true,
+    required: true, // ⚙️ FIXED: Changed from 'require' to 'required'
   },
   email: {
     type: String,
-    require: true,
+    required: true,  // ⚙️ FIXED: Changed from 'require' to 'required'
+    unique: true,    // 🛡️ CRITICAL: Prevents email registration account collisions
+    lowercase: true, // Standardizes lookups
+    trim: true
   },
   passwordHash: {
     type: String,
-    require: true,
+    required: true, // ⚙️ FIXED: Changed from 'require' to 'required'
   },
   phone: {
     type: String,
-    require: true,
+    required: true, // ⚙️ FIXED: Changed from 'require' to 'required'
   },
   isAdmin: {
     type: Boolean,
-    require: false,
+    default: false,
   },
-   // 🟢 UPWORK ROLE ARRAY SYSTEM: Replaces a strict true/false boolean flag
+  // 🟢 UPWORK ROLE ARRAY SYSTEM: Replaces a strict true/false boolean flag
   roles: {
     type: [String],
     enum: ["customer", "installer", "admin"],
@@ -34,6 +37,22 @@ const userSchema = mongoose.Schema({
   installerStatus: { type: String, default: "Active" },
   images: { type: String, default: "" },
   imagesPublicId: { type: String, default: "" },
+  
+  // 🟢 PAYSTACK ROUTING DISBURSEMENT ATTRIBUTES: Added to store routing details securely
+  settlementBank: {
+    type: String,
+    default: null // Saved as Paystack Bank Code string (e.g., '057' for Zenith Bank)
+  },
+  accountNumber: {
+    type: String,
+    default: null // 10-Digit NUBAN Account number
+  },
+  paystackSubaccount: {
+    type: String,
+    default: null // Generated subaccount token tracking key string (e.g., 'ACCT_xxxxxx')
+  },
+
+  /* 🛒 CUSTOMER / CORE ADDRESS ATTRIBUTES */
   street: {
     type: String,
     default: "",
@@ -54,7 +73,7 @@ const userSchema = mongoose.Schema({
     type: String,
     default: "",
   },
-});
+}, { timestamps: true }); // Automatically manages createdAt and updatedAt values
 
 userSchema.virtual("id").get(function () {
   return this._id.toHexString();

@@ -1,133 +1,136 @@
 <template>
-  
-  <section class="w-11/1 mx-auto mt-10 relative slider-container">
-    <!-- NAV BUTTONS -->
-
-    <!-- Left Button (Previous) -->
-<button
-  ref="prevBtn"
-  class="position-absolute top-50 start-0 translate-middle-y ms-3 z-3 text-white bg-primary p-2 rounded-circle"
-  style="top: 66%;"
->
-  <i class="bi bi-arrow-left fs-3"></i>
-</button>
-
-<!-- Right Button (Next) -->
-<button
-  ref="nextBtn"
-  class="position-absolute top-50 end-0 translate-middle-y me-3 z-3 text-white bg-primary p-2 rounded-circle"
-  style="top: 66%;"
->
-  <i class="bi bi-arrow-right fs-3"></i>
-</button>
-
-
+  <section class="slider-container">
+    <!-- Navigation Buttons -->
     <button ref="prevBtn" class="nav-btn left">‹</button>
     <button ref="nextBtn" class="nav-btn right">›</button>
 
     <swiper
-      :effect="'coverflow'"
+      :modules="[EffectCoverflow, Navigation, Autoplay]"
+      effect="coverflow"
       grabCursor
       centeredSlides
       :slidesPerView="'auto'"
-      :coverflowEffect="{
-        rotate: 50,
-        stretch: 0,
-        depth: 100,
-        modifier: 1,
-        slideShadows: true,
-      }"
+      :coverflowEffect="coverflowEffect"
       :navigation="navigationOptions"
-      loop
-      :modules="[EffectCoverflow, Navigation]"
-      class="w-full"
+      :autoplay="autoplayOptions"
+      :loop="(categories || []).length > 3"
+      :breakpoints="breakpoints"
+      class="swiper-container"
     >
       <swiper-slide
-        v-for="category in categories"
-        :key="category.id"
+        v-for="category in categories || []"
+        :key="category._id"
         class="slide"
       >
-        <CategoryBox
-          :category="category"
-          @category-deleted="$emit('refresh')"
-        />
+        <CategoryBox :category="category" />
       </swiper-slide>
     </swiper>
   </section>
-  
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, nextTick } from "vue";
 import CategoryBox from "./CategoryBox/CategoryBox.vue";
 
 // Swiper
 import { Swiper, SwiperSlide } from "swiper/vue";
-import { Navigation, EffectCoverflow } from "swiper/modules";
+import { Navigation, EffectCoverflow, Autoplay } from "swiper/modules";
 
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/effect-coverflow";
 
-const props = defineProps({
+defineProps({
   categories: Array,
 });
 
-// navigation (KEEP THIS)
+// Navigation refs
 const prevBtn = ref(null);
 const nextBtn = ref(null);
 
-const navigationOptions = {
+// Navigation config (reactive)
+const navigationOptions = ref({
   prevEl: null,
   nextEl: null,
-};
-
-onMounted(() => {
-  navigationOptions.prevEl = prevBtn.value;
-  navigationOptions.nextEl = nextBtn.value;
 });
 
-// 🔥 COVERFLOW CONFIG
-const coverflowEffect = {};
+// Autoplay
+const autoplayOptions = {
+  delay: 3000,
+  disableOnInteraction: false,
+};
+
+// Coverflow effect
+const coverflowEffect = {
+  rotate: 40,
+  stretch: 0,
+  depth: 120,
+  modifier: 1,
+  slideShadows: false,
+};
+
+// Responsive
+const breakpoints = {
+  320: {
+    slidesPerView: 1.2,
+  },
+  640: {
+    slidesPerView: 2,
+  },
+  1024: {
+    slidesPerView: 3,
+  },
+};
+
+// Attach navigation AFTER mount
+onMounted(async () => {
+  await nextTick();
+  navigationOptions.value.prevEl = prevBtn.value;
+  navigationOptions.value.nextEl = nextBtn.value;
+});
 </script>
 
 <style scoped>
-.nav-btn {
-  position: absolute;
-  top: 40%;
-  transform: translateY(-50%);
-  z-index: 10;
-  background: #000;
-  color: #fff;
-  border: none;
-  padding: 10px;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
 .slider-container {
-  height: 350px; /* 🔥 adjust based on your card height */
+  position: relative;
+  width: 100%;
+  min-height: 350px;
   display: flex;
   align-items: center;
-  margin-top:10px;
 }
 
-.swiper {
+.swiper-container {
+  width: 100%;
   height: 100%;
 }
 
-.left {
-  left: 0;
-}
-
-.right {
-  right: 0;
-}
-
-/* 🔥 THIS CONTROLS HOW MANY YOU SEE */
+/* Slides */
 .slide {
   max-width: 280px;
   display: flex;
   justify-content: center;
+}
+
+/* Navigation buttons */
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background: #0d6efd;
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.left {
+  left: 10px;
+}
+
+.right {
+  right: 10px;
 }
 </style>

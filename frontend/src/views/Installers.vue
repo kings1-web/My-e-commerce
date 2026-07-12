@@ -104,7 +104,7 @@
               <div class="flex-grow-1 px-md-3">
                 <div class="d-flex flex-wrap gap-1">
                   <span
-                    v-for="skill in installer.skills"
+                    v-for="skill in installer.skills || []"
                     :key="skill"
                     class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1 rounded"
                   >
@@ -128,12 +128,12 @@
     
 
                   <!-- ✅ RESTORED BUTTON METHOD: Reinserted the missing request submission trigger option button -->
-                  <button
+                 <!-- <button
                     class="btn btn-primary btn-sm px-3"
-                    @click="requestInstaller(installer._id)"
+                    @click="requestInstaller(installer)"
                   >
                     Request
-                  </button>
+                  </button>-->
                 </div>
               </div>
             </div>
@@ -175,7 +175,7 @@
             ></button>
           </div>
           <div class="modal-body">
-            <form @submit.prevent="submitInstallationRequest">
+            <form @submit.prevent="submitSingleInstallerRequest">
               <div class="mb-3">
                 <label
                   for="customerAddressInput"
@@ -310,86 +310,81 @@ export default {
     },
 
     // Step 1: Triggered when user clicks "Request" button in list layout
-  /* requestInstaller(installerId) {
-      if (!this.authStore.token) {
-        this.$swal({
-          text: "Please sign into your customer account first to request an installation.",
-          icon: "warning",
-        });
-        this.$router.push("/login");
-        return;
+ requestInstaller(installer) {
+  if (!this.authStore.token) {
+    this.$swal({
+      text: "Please sign in first.",
+      icon: "warning",
+    });
+    this.$router.push("/login");
+    return;
+  }
+
+  // ✅ store installer properly
+  this.selectedInstallerId = installer._id;
+
+  // clear old input
+  this.customerAddress = "";
+
+  // ✅ OPEN MODAL CORRECTLY
+  this.bsModalInstance = new bootstrap.Modal(
+  document.getElementById("addressModal")
+);
+this.bsModalInstance.show();
+},
+
+async submitSingleInstallerRequest() {
+  const customerId =
+    this.authStore.user?.id ||
+    this.authStore.user?._id ||
+    this.authStore.userId;
+
+  const customerPhone =
+    this.authStore.user?.phone ||
+    this.authStore.userDetails?.phone;
+
+  if (!customerId) return alert("Customer ID missing.");
+
+  if (!customerPhone) {
+    return alert("Add phone number to your profile.");
+  }
+
+  if (!this.customerAddress.trim()) {
+    return alert("Enter address.");
+  }
+
+  this.isSubmitting = true;
+
+  try {
+    await axios.post(
+      `${this.baseURL}requests/send-to-installer`,
+      {
+        userId: customerId,
+        installerId: this.selectedInstallerId, // ✅ FIXED
+        address: this.customerAddress.trim(),
+        phone: customerPhone.trim(),
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${this.authStore.token}`,
+        },
       }
+    );
 
-      this.selectedInstallerId = installerId;
-      this.customerAddress = ""; // Clear old state values safely
+    // ✅ CLOSE MODAL
+    this.bsModalInstance.hide();
 
-      // 🟢 FIXED: Finding and instantiating Bootstrap module safely via verified reference calls
-      const modalElement = document.getElementById("addressModal");
-      if (modalElement) {
-        const bootstrapModal = new bootstrap.Modal(modalElement);
-        bootstrapModal.show();
-      } else {
-        console.error(
-          "Critical HTML Error: No template dialog container wrapper exists tracking id='addressModal'",
-        );
-      }
-    },
+    this.$swal("Success", "Request sent!", "success");
 
-    // Step 2: Triggered when user clicks "Confirm & Send Request" inside modal popup
-    async submitInstallationRequest() {
-      const customerId =
-        this.authStore.user?.id ||
-        this.authStore.user?._id ||
-        this.authStore.userId;
+    this.customerAddress = "";
 
-      if (!customerId) {
-        this.$swal({
-          text: "Customer profile data missing. Please try logging out and back in.",
-          icon: "warning",
-        });
-        return;
-      }
-
-      this.isSubmitting = true;
-      try {
-        // 🟢 FIXED PAYLOAD: Ensures the product payload parameter string can never fall back to undefined tracking
-        const targetProductId = this.productId || this.$route.params.id;
-
-        await axios.post(
-          `${this.baseURL}Requests`,
-          {
-            userId: customerId,
-            installerId: this.selectedInstallerId,
-            product: targetProductId,
-            address: this.customerAddress.trim(),
-          },
-          {
-            headers: { Authorization: `Bearer ${this.authStore.token}` },
-          },
-        );
-
-        // Close modal programmatically by pulling click trigger from the close button node ref
-        // Ensure your modal wrapper contains: ref="closeAddressModalBtn" inside its HTML tag!
-        if (this.$refs.closeAddressModalBtn) {
-          this.$refs.closeAddressModalBtn.click();
-        }
-
-        this.$swal({
-          text: "Installation request submitted to technician dashboard!",
-          icon: "success",
-        });
-      } catch (err) {
-        console.error("Escrow setup generation crash:", err);
-        this.$swal({
-          text:
-            "Failed to submit request: " +
-            (err.response?.data?.message || err.message),
-          icon: "warning",
-        });
-      } finally {
-        this.isSubmitting = false;
-      }
-    },*/
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.message || "Failed request");
+  } finally {
+    this.isSubmitting = false;
+  }
+},
 
     async submitReview() {
       if (!this.authStore.token) {

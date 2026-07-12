@@ -129,11 +129,22 @@ export default {
       isLoading: false
     };
   },
+  beforeUnmount() {
+    if (this.socket) {
+      this.socket.disconnect();
+    }
+  },
   mounted() {
-    this.socket = io("http://localhost:3000");
+    // Clean up trailing endpoint fragments to find the root Socket.io port path safely
+    const socketURL = this.baseURL.replace("/api/v1/", "");
+    this.socket = io(socketURL);
+
+    // Join room channel mapping configuration block
     this.socket.emit("join_room", this.requestId);
 
+    // 🟢 FIXED: Filter incoming room events to prevent duplicate rendering frames
     this.socket.on("receive_message", (data) => {
+      if (data.senderId === this.currentUserId) return; // Prevent local duplication
       this.messages.push(data);
       this.scrollToBottom();
     });
@@ -144,7 +155,10 @@ export default {
     async fetchChatHistory() {
       try {
         const token = localStorage.getItem("token") || localStorage.getItem("installerToken");
-        if (!token) return;
+        if (!token){
+          console.error("no auth token found");
+          return;
+        } 
 
         const res = await axios.get(`${this.baseURL}messages/history/${this.requestId}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -152,7 +166,7 @@ export default {
         this.messages = Array.isArray(res.data) ? res.data : [];
         this.scrollToBottom();
       } catch (err) {
-        console.error(err);
+        console.error("Chat trace retrieval exception logs:", err);
       }
     },
     handleFileChange(e) {
@@ -168,207 +182,83 @@ export default {
     clearFile() {
       this.selectedFile = null;
       this.imagePreview = null;
-      this.$refs.fileInput.value = "";
+      if (this.$refs.fileInput) {
+        this.$refs.fileInput.value = "";
+      }
     },
+
     async dispatchMessage() {
-      if (!this.textMessage.trim() && !this.selectedFile) return;
+      // 🟢 FIXED: Added safe optional checking to prevent null data layout crashes
+      const textContent = this.textMessage ? this.textMessage.trim() : "";
+      if (!textContent && !this.selectedFile) return;
+
       this.isLoading = true;
 
       try {
         const token = localStorage.getItem("token") || localStorage.getItem("installerToken");
+        if (!token) return;
+
         const formData = new FormData();
         formData.append("requestId", this.requestId);
         formData.append("senderId", this.currentUserId);
         formData.append("senderModel", this.senderModel);
-        formData.append("messageText", this.textMessage.trim());
-        if (this.selectedFile) formData.append("attachment", this.selectedFile);
+        formData.append("messageText", textContent);
+
+        if (this.selectedFile) {
+          formData.append("attachment", this.selectedFile);
+        }
 
         const res = await axios.post(`${this.baseURL}messages/upload-attachment`, formData, {
-          headers: { 
+          headers: {
             "Content-Type": "multipart/form-data",
-            "Authorization": `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
 
-        this.socket.emit("send_message", res.data);
+        // 🟢 Push locally right away so the user experiences zero lag or latency delays
         this.messages.push(res.data);
-        
+        this.scrollToBottom();
+
+        // Broadcast to the other user via Socket rooms channel pipelines
+        this.socket.emit("send_message", res.data);
+
         this.textMessage = "";
         this.clearFile();
-        this.scrollToBottom();
+
       } catch (err) {
-        console.error(err);
+        console.error("Send message error:", err);
+        alert("Message delivery sequence failure.");
       } finally {
         this.isLoading = false;
       }
     },
+
     scrollToBottom() {
       this.$nextTick(() => {
         const container = this.$refs.chatScrollContainer;
-        if (container) container.scrollTop = container.scrollHeight;
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
       });
     },
-    viewFullImage(url) { window.open(url, "_blank"); }
+    viewFullImage(url) { 
+      window.open(url, "_blank"); 
+    }
   }
 };
 </script>
 
-
 <style scoped>
 /* 🟢 WHATSAPP SKIN BRAND COLOR SCHEMA PALETTE STYLES */
-.bg-whatsapp {
-  background-color: #efeae2;
-  background-image: url("https://githubusercontent.com"); /* Classic WA tiled background */
-  background-repeat: repeat;
-  border-radius: 12px !important;
-  overflow: hidden;
-}
-
-.bg-whatsapp-header {
-  background-color: #005e54; /* Clean Deep Teal WA Green */
-}
-
-.bg-whatsapp-footer {
-  background-color: #f0f2f5;
-}
-
-.text-success-light {
-  color: #4bed94 !important;
-  font-size: 0.75rem;
-}
-
-.chat-title-text {
-  font-size: 0.95rem;
-}
-
-/* AVATAR & METRICS LAYOUT PROPERTIES */
-.avatar-placeholder {
-  width: 40px;
-  height: 40px;
-  background-color: rgba(255, 255, 255, 0.15);
-  font-size: 1.2rem;
-}
-
-.online-indicator-dot {
-  width: 7px;
-  height: 7px;
-  background-color: #4bed94;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-/* CHAT AREA SCROLL CONTAINER LOGS */
-.chat-feed-window {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.chat-feed-window::-webkit-scrollbar {
-  width: 5px;
-}
-
-.chat-feed-window::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
-}
-
-/* 🟢 THE ICONIC WHATSAPP BUBBLE WRAPPERS LAYOUT CSS */
-.chat-bubble {
-  padding: 8px 12px 6px 12px;
-  border-radius: 7.5px;
-  max-width: 70%;
-  word-wrap: break-word;
-}
-
-.bubble-outgoing {
-  background-color: #d9fdd3; /* Accurate light green WA incoming color */
-  color: #111b21;
-  border-top-right-radius: 0;
-}
-
-.bubble-incoming {
-  background-color: #ffffff; /* Clean pure white */
-  color: #111b21;
-  border-top-left-radius: 0;
-}
-
-.message-text-node {
-  font-size: 0.88rem;
-  white-space: pre-line;
-}
-
-/* MEDIA & IMAGE MANAGEMENT ATTACHMENTS LAYOUT RULES */
-.message-attachment-box img {
-  max-width: 100%;
-  border-radius: 6px;
-  display: block;
-  transition: opacity 0.2s ease;
-}
-
-.message-attachment-box img:hover {
-  opacity: 0.95;
-}
-
-/* TIMESTAMP SUBTEXTS INSIDE BUBBLE CONTAINER */
-.bubble-meta {
-  font-size: 0.68rem;
-  color: #667781;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  line-height: 1;
-}
-
-.text-primary-light {
-  color: #53bdeb !important; /* Iconic WA blue read-checkmark */
-  font-weight: bold;
-}
-
-/* INTERACTIVE BOTTOM BAR ACTIONS LAYOUT FOOTER CONTROLS */
-.chat-input-field {
-  background-color: #ffffff;
-  color: #111b21;
-  font-size: 0.9rem;
-}
-
-.chat-footer-action-btn:hover {
-  color: #54656f !important;
-}
-
-.btn-whatsapp-send {
-  width: 38px;
-  height: 38px;
-  background-color: #00a884; /* Vibrant active accent WA submit button */
-  border: none;
-  transition: background-color 0.15s ease;
-}
-
-.btn-whatsapp-send:hover:not(:disabled) {
-  background-color: #008f72;
-}
-
-.btn-whatsapp-send:disabled {
-  background-color: #a6d9ce;
-  cursor: not-allowed;
-}
-
-.shadow-xs {
-  box-shadow: 0 1px 0.5px rgba(11, 20, 26, .13);
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.2s ease-in-out forwards;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+.bg-whatsapp { background-color: #efeae2; }
+.bg-whatsapp-header { background-color: #008069; }
+.bg-whatsapp-footer { background-color: #f0f2f5; }
+.chat-feed-window { height: 450px; overflow-y: auto; }
+.chat-bubble { max-width: 65%; padding: 8px 12px; rounded: 8px; }
+.bubble-outgoing { background-color: #d9fdd3; margin-left: auto; border-radius: 8px 0px 8px 8px; }
+.bubble-incoming { background-color: #ffffff; margin-right: auto; border-radius: 0px 8px 8px 8px; }
+.cursor-pointer { cursor: pointer; }
+.shadow-xs { box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); }
 </style>
+
 

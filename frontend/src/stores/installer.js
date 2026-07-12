@@ -1,60 +1,57 @@
-import { defineStore } from "pinia";
 import axios from "axios";
+import { defineStore } from "pinia";
+import { useAuthStore } from "./auth"; // 🟢 Import your master unified authentication state machine
 
-export const useInstallerStore = defineStore("Installer", {
+export const useInstallerStore = defineStore("installer", {
   state: () => ({
-    installer: JSON.parse(localStorage.getItem("installerData")) || null,
-    token: localStorage.getItem("installerToken") || null,
-    requests: [],
+    // This array holds the live data rows rendered by your table loop
+    requests: [], 
+    // 🟢 ADDED: Caches the installer's professional details for the dashboard header
+    installer: null 
   }),
-
   actions: {
-    async register(baseURL, data) {
-      return await axios.post(`${baseURL}installers/register`, data);
+     async getRequests(baseURL) {
+      const authStore = useAuthStore();
+      
+      if (!authStore.token) {
+        console.warn("Blocking fetch: Token is missing from LocalStorage.");
+        return;
+      }
+
+      try {
+        // 🟢 PERFECT SYNC: Uses strict lowercase 'requests/requests' to match your backend!
+        const res = await axios.get(`${baseURL}requests/requests`, {
+          headers: {
+            Authorization: `Bearer ${authStore.token}` // Passes the passport token securely
+          }
+        });
+
+        this.requests = Array.isArray(res.data) ? res.data : [];
+        
+      } catch (err) {
+        console.error("Axios installer requests lookup failure:", err);
+        this.requests = [];
+        throw err;
+      }
     },
+     async getInstallerProfile(baseURL) {
+      const authStore = useAuthStore();
+      if (!authStore.token) return;
 
-    async login(baseURL, data) {
-      const res = await axios.post(`${baseURL}installers/login`, data);
-      this.installer = res.data.installer;
-      this.token = res.data.token;
-
-      localStorage.setItem("installerToken", this.token);
-      localStorage.setItem("installerData", JSON.stringify(this.installer));
-    },
-
-    async getRequests(baseURL) {
-  const res = await axios.get(`${baseURL}Requests/requests`, { // ✅ Targets Requests/requests path namespace
-    headers: {
-      Authorization: `Bearer ${this.token}`,
-    },
-  });
-  this.requests = res.data;
-},
-
-
-    // NEW ACTION: Handles backend photo swap and updates frontend local state synchronously
-    async updateProfileImage(baseURL, file) {
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const res = await axios.put(`${baseURL}installers/profile/image`, formData, {
-        headers: {
-          Authorization: `Bearer ${this.token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      this.installer = res.data.installer;
-      localStorage.setItem("installerData", JSON.stringify(this.installer));
-      return res.data;
-    },
-
-    logout() {
-      this.installer = null;
-      this.token = null;
-      this.requests = [];
-      localStorage.removeItem("installerToken");
-      localStorage.removeItem("installerData");
-    },
-  },
+      try {
+        const res = await axios.get(`${baseURL}installers/profile/me`, {
+          headers: {
+            Authorization: `Bearer ${authStore.token}` // Passes the passport token securely
+          }
+        });
+        
+        this.installer = res.data;
+        return res.data;
+      } catch (err) {
+        console.error("Failed to load technician self-profile metrics:", err);
+        this.installer = null;
+      }
+    }
+  }
 });
+
