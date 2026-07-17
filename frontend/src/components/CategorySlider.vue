@@ -10,11 +10,9 @@
       grabCursor
       centeredSlides
       :slidesPerView="'auto'"
-      :coverflowEffect="coverflowEffect"
       :navigation="navigationOptions"
       :autoplay="autoplayOptions"
-      :loop="(categories || []).length > 3"
-      :breakpoints="breakpoints"
+      :loop="(categories || []).length > 1"
       class="swiper-container"
     >
       <swiper-slide
@@ -60,27 +58,8 @@ const autoplayOptions = {
   disableOnInteraction: false,
 };
 
-// Coverflow effect
-const coverflowEffect = {
-  rotate: 40,
-  stretch: 0,
-  depth: 120,
-  modifier: 1,
-  slideShadows: false,
-};
 
-// Responsive
-const breakpoints = {
-  320: {
-    slidesPerView: 1.2,
-  },
-  640: {
-    slidesPerView: 2,
-  },
-  1024: {
-    slidesPerView: 3,
-  },
-};
+
 
 // Attach navigation AFTER mount
 onMounted(async () => {
