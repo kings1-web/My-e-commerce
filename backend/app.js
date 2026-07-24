@@ -8,45 +8,40 @@ const mongoose = require("mongoose");
 const { Server } = require("socket.io");
 const cors = require("cors");
 
-// Dotenv configuration initialized immediately
 const dotenv = require('dotenv');
 dotenv.config();
 
 // =========================================================================
-// 🔒 1. COMPLETE PLATFORM CORS CONFIGURATION MATRIX
+// 🔒 1. PLATFORM CORS CONFIGURATION MATRIX
 // =========================================================================
 const allowedOrigins = [
   "http://localhost:5173", 
   "http://127.0.0.1:5173",
-  "https://shoppersfix.com",       // 👈 Added your custom domain
-  "https://shoppersfix.com"    // 👈 Added the www variant
+  "https://shoppersfix.com",
+  "https://www.shoppersfix.com" // 👈 Add www variation just in case
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow server-to-server requests or matching browser origins cleanly
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       callback(new Error("CORS Policy Violation: Origin unauthorized."));
     }
   },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], 
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "x-paystack-signature"],
   credentials: true,
   optionsSuccessStatus: 204
 };
 
-// Apply comprehensive CORS matrix parameters to Express immediately
 app.use(cors(corsOptions));
-
-// 🟢 CRITICAL REPAIR: Intercept all OPTIONS preflight handshakes and return an immediate 204 OK status
 app.options("*", cors(corsOptions));
 
 // Socket.io Server Setup
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins, // 👈 Socket.io now implicitly trusts your custom domain
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
   },
@@ -54,10 +49,7 @@ const io = new Server(server, {
   pingInterval: 25000 
 });
 
-// Import Message Mongoose Model
 const Message = require("./models/message"); 
-
-// Destructure authJwt correctly from helper file
 const { authJwt } = require("./helpers/jwt");
 const errorHandler = require("./helpers/error-handler");
 
@@ -75,18 +67,12 @@ const paymentsRouter = require("./routers/payments");
 
 const api = process.env.API_URL || "/api/v1";
 
-// Standard Global Body-Parsing Middleware 
-app.use(express.json());
+// =========================================================================
+// 🟢 FIXED ORDER MIDDLEWARES: Setup Body Parsing & Custom Verifications FIRST
+// =========================================================================
 app.use(morgan("tiny"));
 
-app.use('/public/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
-
-// 🟢 CRITICAL REPAIR: Active the global JWT middleware scanner ONLY for authenticated methods
-app.use('/api', authJwt());
-
-// Global Error Handler Middleware (Must come AFTER authJwt/routers to catch failures)
-app.use(errorHandler);
-
+// Single cohesive body parser setup ensuring raw body is stored before routes read it
 app.use(
   express.json({
     verify: (req, res, buf) => {
@@ -96,6 +82,11 @@ app.use(
     },
   })
 );
+
+app.use('/public/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+
+// Active the global JWT middleware scanner ONLY for authenticated methods
+app.use('/api', authJwt());
 
 // Routers Mappings
 app.use(`${api}/categories`, categoriesRouter);
@@ -108,6 +99,16 @@ app.use(`${api}/reviews`, reviewsRouter);
 app.use(`${api}/installer-reviews`, installerReviewsRouter);
 app.use(`${api}/messages`, messagesRouter);
 app.use(`${api}/payments`, paymentsRouter); 
+
+// SPA Fallback handling
+app.use(express.static(path.join(__dirname, "dist")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
+
+// 🟢 CRITICAL REPAIR: The Error Handler must reside at the very bottom of your application stack
+app.use(errorHandler);
 
 // REAL-TIME SOCKET CONNECTION PIPELINE
 io.on("connection", (socket) => {
@@ -134,7 +135,6 @@ io.on("connection", (socket) => {
       }
 
       socket.to(requestId).emit("receive_message", messageData);
-
     } catch (err) {
       console.error("❌ Socket message processing crash:", err.message);
       socket.emit("socket_error", { message: "Failed to securely process your message text over websocket." });
@@ -151,17 +151,9 @@ io.on("connection", (socket) => {
   });
 });
 
-// Frontend SPA Fallback handling
-app.use(express.static(path.join(__dirname, "dist")));
-
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
-});
-
 const mongoURI = process.env.BASE_URL || "mongodb://localhost:27017/ecommerce";
 const PORT = process.env.PORT || 3000;
 
-// Database Connection
 mongoose
   .connect(mongoURI)
   .then(() => {
@@ -173,4 +165,3 @@ mongoose
   .catch((err) => {
     console.error("Database connection failure:", err);
   });
-
