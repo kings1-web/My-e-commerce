@@ -15,7 +15,12 @@ dotenv.config();
 // =========================================================================
 // 🔒 1. COMPLETE PLATFORM CORS CONFIGURATION MATRIX
 // =========================================================================
-const allowedOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
+const allowedOrigins = [
+  "http://localhost:5173", 
+  "http://127.0.0.1:5173",
+  "https://shoppersfix.com",       // 👈 Added your custom domain
+  "https://shoppersfix.com"    // 👈 Added the www variant
+];
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -26,23 +31,22 @@ const corsOptions = {
       callback(new Error("CORS Policy Violation: Origin unauthorized."));
     }
   },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // ✅ Explicitly authorized PUT & OPTIONS parameters
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
   credentials: true,
   optionsSuccessStatus: 204
 };
 
 // Apply comprehensive CORS matrix parameters to Express immediately
-//app.use(cors(corsOptions));
+app.use(cors(corsOptions));
 
 // 🟢 CRITICAL REPAIR: Intercept all OPTIONS preflight handshakes and return an immediate 204 OK status
-// This guarantees the browser clears the preflight check beforehitting the JWT token middleware scanner
 app.options("*", cors(corsOptions));
 
 // Socket.io Server Setup
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins, 
+    origin: allowedOrigins, // 👈 Socket.io now implicitly trusts your custom domain
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
   },
@@ -78,11 +82,20 @@ app.use(morgan("tiny"));
 app.use('/public/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 // 🟢 CRITICAL REPAIR: Active the global JWT middleware scanner ONLY for authenticated methods
-// Preflight checking operations are explicitly bypassed by the underlying express-jwt library
 app.use('/api', authJwt());
 
 // Global Error Handler Middleware (Must come AFTER authJwt/routers to catch failures)
 app.use(errorHandler);
+
+app.use(
+  express.json({
+    verify: (req, res, buf) => {
+      if (req.originalUrl.includes("/webhook")) {
+        req.rawBody = buf.toString();
+      }
+    },
+  })
+);
 
 // Routers Mappings
 app.use(`${api}/categories`, categoriesRouter);
@@ -154,7 +167,7 @@ mongoose
   .then(() => {
     console.log("Database connection is ready...");
     server.listen(PORT, () => {
-      console.log(`⚡ Full-Stack Gateway Running cleanly on http://localhost:${PORT}`);
+      console.log(`⚡ Full-Stack Gateway Running cleanly on port ${PORT}`);
     });
   })
   .catch((err) => {
