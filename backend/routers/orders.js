@@ -6,7 +6,35 @@ const router = express.Router();
 require("dotenv/config");
 const baseURL="";
 
+// ==========================================
+// GOOGLE ANALYTICS HELPER FUNCTION
+// ==========================================
+const trackGAPurchase = async (clientId, orderId, totalPrice, currency = 'NGN') => {
+  const measurementId = process.env.GA_MEASUREMENT_ID; // G-XXXXXXXXXX
+  const apiSecret = process.env.GA_API_SECRET; // From GA admin console
+  
+  if (!measurementId || !apiSecret || !clientId) return;
 
+  const url = `https://google-analytics.com{measurementId}&api_secret=${apiSecret}`;
+  
+  try {
+    await axios.post(url, {
+      client_id: clientId,
+      events: [{
+        name: 'purchase', // Standard GA4 e-commerce event
+        params: {
+          transaction_id: orderId.toString(),
+          value: totalPrice,
+          currency: currency,
+          items: [] // Optional: Loop through order items if you populate products
+        }
+      }]
+    });
+    console.log(`GA4 purchase tracked for order: ${orderId}`);
+  } catch (error) {
+    console.error('GA Tracking Error:', error.response?.data || error.message);
+  }
+};
 
 router.get("/", async (req, res) => {
   if (!req.auth.isAdmin) {
@@ -160,6 +188,7 @@ router.get("/verify/:ref", async (req, res) => {
     }
 
     const orderId = data.metadata.orderId;
+     const gaClientId = data.metadata.gaClientId; // 👈 Extract client ID from metadata
 
     // ✅ Find existing order
     const order = await Order.findById(orderId);
@@ -185,6 +214,11 @@ router.get("/verify/:ref", async (req, res) => {
     order.transactionRef = req.params.ref;
 
     await order.save();
+
+     // 🚀 TRACK TO GOOGLE ANALYTICS ONCE PAID SUCCESSFULLY
+    if (gaClientId) {
+      await trackGAPurchase(gaClientId, order._id, order.totalPrice, data.currency || 'NGN');
+    }
 
     res.json({
       success: true,
@@ -291,7 +325,7 @@ router.delete("/:id", (req, res) => {
     if (!req.auth || !req.auth.userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-
+   const { gaClientId } = req.body; // 👈 Extract client ID from payload
     const orderItemsIds = await Promise.all(
       req.body.orderItems.map(async (item) => {
         const productId =
@@ -330,6 +364,12 @@ router.delete("/:id", (req, res) => {
     });
 
     const savedOrder = await order.save();
+
+
+    // 🚀 TRACK COD TO GOOGLE ANALYTICS ON PLACEMENT
+    if (gaClientId) {
+      await trackGAPurchase(gaClientId, savedOrder._id, savedOrder.totalPrice, 'NGN');
+    }
 
     res.json({
       success: true,
