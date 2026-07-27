@@ -100,6 +100,51 @@ app.use(`${api}/installer-reviews`, installerReviewsRouter);
 app.use(`${api}/messages`, messagesRouter);
 app.use(`${api}/payments`, paymentsRouter); 
 
+// =========================================================================
+// 🚀 DYNAMIC XML SITEMAP GENERATOR ENGINE FOR GOOGLE SEARCH CONSOLE
+// =========================================================================
+const { SitemapStream, streamToPromise } = require('sitemap');
+const { Readable } = require('stream');
+// Named import matching your schema setup
+const { Product } = require("./models/product"); 
+
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    res.header('Content-Type', 'application/xml');
+
+    // 1. Establish your public client-facing static storefront URLs
+    const links = [
+      { url: '/', changefreq: 'daily', priority: 1.0 },
+      { url: '/installers', changefreq: 'weekly', priority: 0.8 },
+      { url: '/become-an-installer', changefreq: 'monthly', priority: 0.6 },
+      { url: '/signup', changefreq: 'monthly', priority: 0.5 },
+      { url: '/login', changefreq: 'monthly', priority: 0.5 }
+    ];
+
+    // 2. Fetch live database products utilizing the _id fields
+    const products = await Product.find({}).select('_id'); 
+    
+    products.forEach(product => {
+      // MATCHES FRONTEND ROUTE: path:'/product/show/:id'
+      links.push({ 
+        url: `/product/show/${product._id.toString()}`, 
+        changefreq: 'weekly', 
+        priority: 0.9 
+      });
+    });
+
+    // 3. Stream data pipeline directly using your custom verified domain
+    const stream = new SitemapStream({ hostname: 'https://shoppersfix.com' });
+    const xmlBuffer = await streamToPromise(Readable.from(links).pipe(stream));
+    
+    return res.send(xmlBuffer.toString());
+  } catch (error) {
+    console.error("❌ Sitemap Generation Error:", error);
+    return res.status(500).end();
+  }
+});
+
+
 // SPA Fallback handling
 app.use(express.static(path.join(__dirname, "dist")));
 
