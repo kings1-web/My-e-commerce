@@ -2,6 +2,7 @@
   <div class="featured-wrapper">
     <div v-if="products.length === 0" class="text-center py-4">
       Loading featured products...
+      wait a momment
     </div>
 
     <Swiper

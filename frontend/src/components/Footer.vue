@@ -4,7 +4,7 @@
       <div class="row gy-4">
         <!-- Brand / Profile Column -->
         <div class="col-md-3 col-12">
-          <h4 class="logo">Kingsley Store</h4>
+          <h4 class="logo">Shoppers-fix Store</h4>
           <p class="footer-text">
             Your one-stop shop for quality gadgets and accessories.
           </p>

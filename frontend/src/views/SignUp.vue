@@ -130,7 +130,7 @@
               
               <div class="col-12 mt-4">
                 <!-- 🟢 FIXED BUTTON TYPE: Changed to standard type="submit" so input tags execute required validation rules -->
-                <button type="submit" class="btn btn-submit-action w-100 fw-bold py-2 shadow-sm" :disabled="isSubmitting">
+                <button @click="trackSignup" type="submit" class="btn btn-submit-action w-100 fw-bold py-2 shadow-sm" :disabled="isSubmitting">
                   <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
                   Create Account
                 </button>
@@ -165,6 +165,14 @@ export default {
     };
   },
   methods: {
+     trackSignup() {
+      // Access the global plugin instance via "this"
+      this.$gtag.event('sign_up', {
+        method: 'Google',
+        value: 1
+      });
+    },
+
     // 🟢 FIXED SUBMISSION METHOD: Cleaned up form capture hooks and unified API paths
     async handleSignupSubmit() {
       this.isSubmitting = true;
