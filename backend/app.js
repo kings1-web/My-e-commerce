@@ -122,12 +122,12 @@ app.get('/sitemap.xml', async (req, res) => {
     ];
 
     // 2. Fetch live database products utilizing the _id fields
-    const products = await Product.find({}).select('_id'); 
+    const products = await Product.find({}).select('id'); 
     
     products.forEach(product => {
       // MATCHES FRONTEND ROUTE: path:'/product/show/:id'
       links.push({ 
-        url: `/product/show/${product._id.toString()}`, 
+        url: `/product/show/${product.id.toString()}`, 
         changefreq: 'weekly', 
         priority: 0.9 
       });
