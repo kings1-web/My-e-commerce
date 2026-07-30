@@ -372,36 +372,47 @@ router.get("/get/featured/:count", async (req, res) => {
 });
 
 
-/*router.put(
+ router.put(
   "/gallery-images/:id",
-  uploadOptions.array("images", 10),
+  uploadOptions.array("images", 10), // Expects field name to be 'images' up to 10 files
   async (req, res) => {
-    if (!mongoose.isValidObjectId(req.params.id)) {
-      return res.status(400).send("Invalid Product Id");
+    try {
+      // 1. Validate Product ID
+      if (!mongoose.isValidObjectId(req.params.id)) {
+        return res.status(400).send("Invalid Product Id");
+      }
+
+      const files = req.files;
+      if (!files || files.length === 0) {
+        return res.status(400).send("No images uploaded in the request");
+      }
+
+      // 2. Loop through memory buffers and upload each to Cloudinary using Promise.all
+      const uploadPromises = files.map((file) => uploadToCloudinary(file.buffer));
+      const uploadResults = await Promise.all(uploadPromises);
+
+      // 3. Extract the secure URLs from Cloudinary response metadata
+      const imagesPaths = uploadResults.map((result) => result.secure_url);
+
+      // 4. Update the document in MongoDB
+      const product = await Product.findByIdAndUpdate(
+        req.params.id,
+        {
+          images: imagesPaths, // Overwrites or saves the array of strings
+        },
+        { new: true }
+      );
+
+      if (!product) {
+        return res.status(404).send("The target product could not be found");
+      }
+
+      res.status(200).send(product);
+    } catch (error) {
+      console.error("Gallery upload error:", error);
+      res.status(500).send({ success: false, error: error.message });
     }
-
-    const files = req.files;
-    let imagesPaths = [];
-
-    if (files && files.length > 0) {
-      imagesPaths = files.map((file) => {
-        return file.path.replace("/upload/", "/upload/w_800,h_800,q_auto,f_auto/");
-      });
-    }
-
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      {
-        images: imagesPaths,
-      },
-      { new: true }
-    );
-
-    if (!product) return res.status(500).send("The gallery cannot be updated");
-
-    res.send(product);
   }
-);*/
-
+);
 
 module.exports = router;

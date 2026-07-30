@@ -3,47 +3,64 @@
     <!-- Main Product Showcase Grid Row -->
     <div class="row pt-4">
       <!-- Left Column: Image Carousel -->
-      <div
-        id="productImageCarousel"
-        class="carousel slide mb-4 col-md-5 col-12 shadow-sm rounded bg-white p-2 border"
-        data-bs-ride="carousel"
-      >
-        <div class="carousel-inner">
-          <div
-            class="carousel-item"
-            v-for="(img, index) in allImages"
-            :key="index"
-            :class="{ active: index === 0 }"
-          >
-            <img
-              :src="img"
-              class="img-fluid rounded object-fit-contain w-100"
-              style="max-height: 400px"
-              alt="Product Image"
-            />
-          </div>
-        </div>
-        <button
-          class="carousel-control-prev"
-          type="button"
-          data-bs-target="#productImageCarousel"
-          data-bs-slide="prev"
-        >
-          <span
-            class="carousel-control-prev-icon bg-dark rounded-circle p-2"
-          ></span>
-        </button>
-        <button
-          class="carousel-control-next"
-          type="button"
-          data-bs-target="#productImageCarousel"
-          data-bs-slide="next"
-        >
-          <span
-            class="carousel-control-next-icon bg-dark rounded-circle p-2"
-          ></span>
-        </button>
-      </div>
+     <!-- Left Column: Image Carousel Showcase Grid -->
+<div
+  id="productImageCarousel"
+  class="carousel slide mb-4 col-md-5 col-12 shadow-sm rounded bg-white p-2 border"
+  data-bs-ride="carousel"
+>
+  <!-- 🟢 ADDED: Carousel Indicators (Tells Bootstrap how many images exist) -->
+  <div class="carousel-indicators" v-if="allImages.length > 1">
+    <button
+      v-for="(img, index) in allImages"
+      :key="'ind-' + index"
+      type="button"
+      data-bs-target="#productImageCarousel"
+      :data-bs-slide-to="index"
+      :class="{ active: index === 0 }"
+      aria-current="true"
+      :aria-label="'Slide ' + (index + 1)"
+      style="filter: invert(1);" 
+    ></button>
+  </div>
+
+  <!-- Carousel Slides Inner Shell -->
+  <div class="carousel-inner">
+    <div
+      class="carousel-item"
+      v-for="(img, index) in allImages"
+      :key="'slide-' + index"
+      :class="{ active: index === 0 }"
+    >
+      <img
+        :src="img"
+        class="img-fluid rounded object-fit-contain w-100"
+        style="max-height: 400px; min-height: 300px;"
+        alt="Product Image Gallery View"
+      />
+    </div>
+  </div>
+
+  <!-- Left & Right Arrow Navigation Controls -->
+  <button
+    class="carousel-control-prev"
+    type="button"
+    data-bs-target="#productImageCarousel"
+    data-bs-slide="prev"
+    v-if="allImages.length > 1"
+  >
+    <span class="carousel-control-prev-icon bg-dark rounded-circle p-2"></span>
+  </button>
+  <button
+    class="carousel-control-next"
+    type="button"
+    data-bs-target="#productImageCarousel"
+    data-bs-slide="next"
+    v-if="allImages.length > 1"
+  >
+    <span class="carousel-control-next-icon bg-dark rounded-circle p-2"></span>
+  </button>
+</div>
 
       <!-- Right Column: Product Specs & Actions -->
       <div class="col-md-7 col-12 ps-md-5 pt-3 pt-md-0">
@@ -504,11 +521,29 @@ export default {
       return "small text-success";
     },
 
-    allImages() {
-      // Combine main image and additional images, filter out undefined/null
-      const images = [this.product.image, ...(this.product.images || [])];
-      return images.filter(Boolean);
-    },
+  allImages() {
+    // Fallbacks to guarantee a flattened array of strings even during slow backend loads
+    const mainImage = this.product?.image;
+    let extraImages = [];
+
+    if (this.product?.images) {
+      if (Array.isArray(this.product.images)) {
+        extraImages = this.product.images;
+      } else if (typeof this.product.images === 'string') {
+        try {
+          extraImages = JSON.parse(this.product.images);
+        } catch (e) {
+          extraImages = [this.product.images];
+        }
+      }
+    }
+
+    // Merges main thumbnail image and gallery array together, filtering out null/undefined entries
+    const combined = [mainImage, ...extraImages];
+    return combined.filter(Boolean);
+  },
+  // Keep your existing averageRating() and characterCounterClass() here...
+
   },
   methods: {
     async openDispute(request) {

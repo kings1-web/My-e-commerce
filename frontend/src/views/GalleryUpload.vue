@@ -35,18 +35,21 @@ export default {
       this.selectedFiles = event.target.files;
     },
     async uploadGalleryImages() {
-      if (!this.selectedFiles) {
+      // 🟢 FIXED: Check the .length property of the FileList/Array
+      if (!this.selectedFiles || this.selectedFiles.length === 0) {
         this.$swal({
-          text: "Please select atleast one image",
+          text: "Please select at least one image",
           icon: "warning",
           closeOnClickOutside: false,
         });
         return;
       }
+      
       const formData = new FormData();
-      for (let I = 0; I < this.selectedFiles.length; I++) {
-        formData.append("images", this.selectedFiles[I]);
+      for (let i = 0; i < this.selectedFiles.length; i++) {
+        formData.append("images", this.selectedFiles[i]);
       }
+      
       try {
         const response = await axios.put(
           `${this.baseURL}products/gallery-images/${this.productId}`,
@@ -58,14 +61,16 @@ export default {
             },
           }
         );
-      this.$router.push({name :"AdminProduct"});
+
         this.$swal({
-          text: "Image uploaded sucessfully",
+          text: "Images uploaded successfully",
           icon: "success",
         });
+        
         console.log(response.data);
+        this.$router.push({ name: "AdminProduct" });
       } catch (err) {
-        console.error(err);
+        console.error("Upload error details:", err.response ? err.response.data : err.message);
         this.$swal({
           text: "Image upload failed",
           icon: "warning",
