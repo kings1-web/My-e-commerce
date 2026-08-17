@@ -1,11 +1,11 @@
 <template>
   <div class="featured-wrapper">
-    <div v-if="products.length === 0" class="text-center py-4">
-      Loading featured products...
-      wait a momment
+    <div v-if="loading" class="text-center py-4">
+      Loading featured products... wait a moment
     </div>
 
     <Swiper
+      v-else-if="products.length > 0"
       :modules="modules"
       :slides-per-view="2"
       :space-between="15"
@@ -15,17 +15,17 @@
       :slides-per-group="1"
       class="mySwiper"
     >
-      <SwiperSlide v-for="product in products" :key="product.id">
+      <SwiperSlide v-for="product in products" :key="product.id || product._id">
         <div class="product-card">
-          <!-- DISCOUNT BADGE -->
+          <!-- DISCOUNT BADGE (Handles String/Number types safely) -->
           <span
-            v-if="product.oldPrice && product.oldPrice > product.price"
+            v-if="Number(product.oldPrice) > Number(product.price)"
             class="discount-badge"
           >
             -{{ getDiscount(product.oldPrice, product.price) }}%
           </span>
 
-          <RouterLink :to="{ name: 'ShowDetails', params: { id: product.id } }">
+          <RouterLink :to="{ name: 'ShowDetails', params: { id: product.id || product._id } }">
             <div class="image-wrapper">
               <img :src="product.image" alt="product image" />
             </div>
@@ -33,17 +33,15 @@
 
           <div class="card-content">
             <RouterLink
-              :to="{ name: 'ShowDetails', params: { id: product.id } }"
+              :to="{ name: 'ShowDetails', params: { id: product.id || product._id } }"
             >
               <p class="title">
                 {{ truncate(product.name, 25) }}
               </p>
             </RouterLink>
 
-            <!-- Inside FeaturedCarousel.vue, place this right below the product title RouterLink -->
             <div class="rating-box mb-2">
               <div class="d-flex align-items-center gap-1">
-                <!-- Star Icons Design Element Mapping -->
                 <span
                   class="stars text-warning small"
                   style="font-size: 0.8rem; color: #ffc107"
@@ -51,15 +49,14 @@
                   <i
                     v-for="star in 5"
                     :key="star"
-                    :class="getStarClass(product.averageRating || 0, star)"
+                    :class="getStarClass(product.averageRating || product.rating || 0, star)"
                   ></i>
                 </span>
-                <!-- Review Numeric Text Metric -->
                 <span class="text-muted ms-1" style="font-size: 0.75rem">
                   ({{
                     product.averageRating
                       ? product.averageRating.toFixed(1)
-                      : "0.0"
+                      : (product.rating ? Number(product.rating).toFixed(1) : "0.0")
                   }})
                 </span>
               </div>
@@ -71,7 +68,7 @@
                 {{ formatPrice(product.price) }}
               </span>
 
-              <span v-if="product.oldPrice" class="old-price">
+              <span v-if="Number(product.oldPrice) > Number(product.price)" class="old-price">
                 {{ formatPrice(product.oldPrice) }}
               </span>
             </div>
@@ -84,18 +81,18 @@
             <!-- ADMIN ACTIONS -->
             <div v-if="$route.name === 'AdminProduct'" class="actions">
               <RouterLink
-                :to="{ name: 'EditProduct', params: { id: product.id } }"
+                :to="{ name: 'EditProduct', params: { id: product.id || product._id } }"
               >
                 <button class="btn edit">Edit</button>
               </RouterLink>
 
               <RouterLink
-                :to="{ name: 'GalleryUpload', params: { id: product.id } }"
+                :to="{ name: 'GalleryUpload', params: { id: product.id || product._id } }"
               >
                 <button class="btn upload">Upload</button>
               </RouterLink>
 
-              <button class="btn delete" @click="deleteProduct(product.id)">
+              <button class="btn delete" @click="deleteProduct(product.id || product._id)">
                 Delete
               </button>
             </div>
@@ -108,8 +105,6 @@
 
 <script>
 import axios from "axios";
-
-// SWIPER
 import { Swiper, SwiperSlide } from "swiper/vue";
 import "swiper/css";
 import "swiper/css/navigation";
@@ -133,6 +128,7 @@ export default {
   data() {
     return {
       products: [],
+      loading: true,
       breakpoints: {
         640: { slidesPerView: 2 },
         768: { slidesPerView: 3 },
@@ -142,18 +138,18 @@ export default {
   },
 
   methods: {
-    // 🟢 ADDED: Calculates individual star display attributes for your swiper cards
     getStarClass(avgRating, starIndex) {
       if (avgRating >= starIndex) {
-        return "bi bi-star-fill"; // Full star class
+        return "bi bi-star-fill";
       } else if (avgRating >= starIndex - 0.5) {
-        return "bi bi-star-half"; // Half star class
+        return "bi bi-star-half";
       } else {
-        return "bi bi-star"; // Empty contour star class
+        return "bi bi-star";
       }
     },
 
     featured() {
+      this.loading = true;
       axios
         .get(`${this.baseURL}products/get/featured/${this.count}`)
         .then((res) => {
@@ -161,6 +157,9 @@ export default {
         })
         .catch((err) => {
           console.error("Failed to load featured products:", err);
+        })
+        .finally(() => {
+          this.loading = false;
         });
     },
 
@@ -177,16 +176,19 @@ export default {
       return text.length > length ? text.substring(0, length) + "..." : text;
     },
 
-    // 🔥 NEW: DISCOUNT CALCULATION
     getDiscount(oldPrice, newPrice) {
-      return Math.round(((oldPrice - newPrice) / oldPrice) * 100);
+      const oldP = Number(oldPrice);
+      const newP = Number(newPrice);
+      if (!oldP || oldP <= newP) return 0;
+      return Math.round(((oldP - newP) / oldP) * 100);
     },
 
     deleteProduct(id) {
+      // ✅ Fixed backend endpoint to match Express router.delete("/:id")
       axios
-        .delete(`${this.baseURL}products/delete/${id}`)
+        .delete(`${this.baseURL}products/${id}`)
         .then(() => {
-          this.products = this.products.filter((p) => p.id !== id);
+          this.products = this.products.filter((p) => (p.id || p._id) !== id);
         })
         .catch((err) => console.error("Delete failed:", err));
     },
@@ -206,18 +208,11 @@ export default {
 
 <style scoped>
 .featured-wrapper {
-  margin: 0px 0;
+  margin: 0;
 }
 
-.section-title {
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 15px;
-}
-
-/* CARD */
 .product-card {
-  line-height: 2x;
+  line-height: 1.4;
   position: relative;
   background: #fff;
   border-radius: 10px;
@@ -230,7 +225,6 @@ export default {
   transform: translateY(-5px);
 }
 
-/* 🔥 DISCOUNT BADGE */
 .discount-badge {
   position: absolute;
   top: 10px;
@@ -243,7 +237,6 @@ export default {
   z-index: 10;
 }
 
-/* IMAGE */
 .image-wrapper {
   width: 100%;
   height: 180px;
@@ -251,12 +244,11 @@ export default {
 }
 
 .image-wrapper img {
-  max-width: 100%;
+  width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-/* CONTENT */
 .card-content {
   padding: 10px;
 }
@@ -267,7 +259,6 @@ export default {
   margin-bottom: 5px;
 }
 
-/* PRICE */
 .price-box {
   display: flex;
   align-items: center;
@@ -291,7 +282,6 @@ export default {
   color: #777;
 }
 
-/* BUTTONS */
 .actions {
   margin-top: 10px;
   display: flex;

@@ -1,20 +1,29 @@
 <template>
-  <div class="container">
-    <div class="row">
-      <div class="col-12 text-center">
-        <h3>our category</h3>
-        <RouterLink :to="{name:'AddCategory'}">
-          <button style="float:right">
-            Add Category
+  <div class="container my-4">
+    <!-- Header Row -->
+    <div class="row align-items-center mb-4">
+      <div class="col-12 d-flex justify-content-between align-items-center">
+        <h3 class="fw-bold text-dark text-capitalize mb-0">Our Categories</h3>
+        <RouterLink :to="{ name: 'AddCategory' }">
+          <button type="button" class="btn btn-primary fw-semibold shadow-sm">
+            + Add Category
           </button>
         </RouterLink>
       </div>
     </div>
-    <div class="row">
-      <div v-for="category of categories" :key="category.id"
-      class="col-md-6 col-xl-4 col-12 pt-3 d-flex"><br/><br/>
-       <CategoryBox :category="category" @category-deleted="$emit('category-deleted',$event)"/>
-       <br/>
+
+    <!-- Category Grid -->
+    <div class="row g-4">
+      <div
+        v-for="category in categories"
+        :key="category.id || category._id"
+        class="col-12 col-md-6 col-xl-4 d-flex"
+      >
+        <CategoryBox
+          :category="category"
+          class="w-100"
+          @category-deleted="$emit('category-deleted', $event)"
+        />
       </div>
     </div>
   </div>
@@ -24,20 +33,21 @@
 import CategoryBox from "@/components/CategoryBox/CategoryBox.vue";
 
 export default {
-    name:'Category',
-    props:["categories"],
-    components:{CategoryBox},
-  data() {
-    return {
-      //baseURL: "https://kings1-web-e-commerce.onrender.com/api/v1/" ,
-     // baseURL: "http://localhost:3000/api/v1/",
-
-    };
+  name: "Category",
+  components: {
+    CategoryBox,
   },
-  methods: {
-   
+  props: {
+    categories: {
+      type: Array,
+      required: true,
+      default: () => [],
+    },
   },
-  mounted(){
-  }
+  emits: ["category-deleted"],
 };
 </script>
+
+<style scoped>
+/* Optional scoped tweaks if needed */
+</style>

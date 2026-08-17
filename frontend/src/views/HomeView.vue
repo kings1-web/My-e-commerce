@@ -86,12 +86,22 @@ import CategoryBox from "@/components/CategoryBox/CategoryBox.vue";
 
 export default {
   name: "Home",
-  components: { CategoryBox, ProductBox, FeaturedCarousel,CategorySlider },
-  props: ["categories", "products", "baseURL"],
+  components: { CategoryBox, ProductBox, FeaturedCarousel, CategorySlider },
+  props: {
+    categories: {
+      type: Array,
+      default: () => []
+    },
+    products: {
+      type: Array,
+      default: () => []
+    },
+    baseURL: String
+  },
   data() {
     return {
-      categorySize: 8,
-      productSize: 8,
+      categorySize: 4,
+      productSize: 20,
     };
   },
   methods: {
@@ -99,20 +109,43 @@ export default {
       e.preventDefault();
       this.$router.push("/category/show/" + e.target.value);
     },
+    updateSizes() {
+      this.categorySize = Math.min(4, this.categories?.length || 0);
+      this.productSize = Math.min(20, this.products?.length || 0);
+    }
   },
   computed: {
     latestCategories() {
+      if (!this.categories || !this.categories.length) return [];
+      // Slice and return the newest entries directly
       return [...this.categories].reverse().slice(0, this.categorySize);
     },
     latestProducts() {
+      if (!this.products || !this.products.length) return [];
+      // Slice and return the newest entries directly
       return [...this.products].reverse().slice(0, this.productSize);
+    }
+  },
+  watch: {
+    // Watch for live backend updates sent down via props
+    categories: {
+      handler() {
+        this.updateSizes();
+      },
+      deep: true,
+      immediate: true
     },
+    products: {
+      handler() {
+        this.updateSizes();
+      },
+      deep: true,
+      immediate: true
+    }
   },
-
   mounted() {
-    this.categorySize = Math.min(8, this.categories.length);
-    this.productSize = Math.min(8, this.products.length);
-  },
+    this.updateSizes();
+  }
 };
 </script>
 

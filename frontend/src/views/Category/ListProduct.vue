@@ -1,19 +1,35 @@
 <template>
-  <div class="container">
-    <div class="row">
+  <div class="container my-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
       <div class="col-12 text-center">
-        <h4 class="pt-3">{{ category?.name || "Category" }}</h4>
-        <h5 style="font-weight:300; color:#686868">{{ msg }}</h5>
+        <h3 class="fw-bold text-dark text-capitalize mb-1">
+          {{ category?.name || "Category Products" }}
+        </h3>
+        <p class="text-muted fw-normal fs-6 mb-0">
+          {{ msg }}
+        </p>
       </div>
     </div>
 
-    <div class="row">
+    <!-- Empty State -->
+    <div
+      v-if="productsList.length === 0"
+      class="row justify-content-center my-5"
+    >
+      <div class="col-md-6 text-center py-5 bg-light rounded border border-dashed">
+        <p class="text-muted mb-0">No products available in this category yet.</p>
+      </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div v-else class="row g-4">
       <div
         v-for="product in productsList"
-        :key="product._id"
-        class="col-md-6 col-xl-4 col-12 pt-3 d-flex justify-content-around"
+        :key="product.id || product._id"
+        class="col-12 col-md-6 col-xl-4 d-flex"
       >
-        <ProductBox :product="product" />
+        <ProductBox :product="product" class="w-100" />
       </div>
     </div>
   </div>
@@ -23,66 +39,94 @@
 import ProductBox from "@/components/CategoryBox/ProductBox.vue";
 
 export default {
-  components: { ProductBox },
-
-  props: ["categories", "baseURL", "products"],
-
+  name: "ListProducts",
+  components: {
+    ProductBox,
+  },
+  props: {
+    categories: {
+      type: Array,
+      default: () => [],
+    },
+    products: {
+      type: Array,
+      default: () => [],
+    },
+    baseURL: {
+      type: String,
+      default: "",
+    },
+  },
   data() {
     return {
       id: null,
-      category: {},
+      category: null,
       productsList: [],
       msg: "",
     };
   },
-
-  mounted() {
-    this.id = String(this.$route.params.id);
-    this.initializeData();
-  },
-
   watch: {
     products: {
       handler: "initializeData",
       deep: true,
+      immediate: true,
     },
     categories: {
       handler: "initializeData",
       deep: true,
+      immediate: true,
     },
     "$route.params.id"(newId) {
-      this.id = String(newId);
-      this.initializeData();
+      if (newId) {
+        this.id = String(newId);
+        this.initializeData();
+      }
     },
   },
-
   methods: {
     initializeData() {
-      // Prevent crash if props not ready
       if (!this.products || !this.categories) return;
 
-      // ✅ Find category using _id
+      this.id = String(this.$route.params.id || "");
+
+      // Flexible Category Resolution
       this.category =
-        this.categories.find(
-          (c) => String(c._id) === String(this.id)
-        ) || {};
+        this.categories.find((c) => {
+          const catId = c.id || c._id;
+          return String(catId) === this.id;
+        }) || null;
 
-      // ✅ Filter products using category._id
-      this.productsList = this.products.filter(
-        (p) => String(p.category?._id) === String(this.id)
-      );
+      // Flexible Product-Category Matching (handles both object & string references)
+      this.productsList = this.products.filter((p) => {
+        if (!p.category) return false;
 
-      // ✅ Message logic
-      if (this.productsList.length === 0) {
-        this.msg = "No product found";
-      } else if (this.productsList.length === 1) {
-        this.msg = "Only 1 product found";
+        const prodCatId =
+          typeof p.category === "object"
+            ? p.category.id || p.category._id
+            : p.category;
+
+        return String(prodCatId) === this.id;
+      });
+
+      // Message Logic
+      const count = this.productsList.length;
+      if (count === 0) {
+        this.msg = "No products found";
+      } else if (count === 1) {
+        this.msg = "1 product found";
       } else {
-        this.msg = `${this.productsList.length} products found`;
+        this.msg = `${count} products found`;
       }
-
-     
     },
+  },
+  mounted() {
+    this.initializeData();
   },
 };
 </script>
+
+<style scoped>
+.border-dashed {
+  border-style: dashed !important;
+}
+</style>

@@ -2,65 +2,64 @@
   <div class="container my-5">
     <!-- Main Product Showcase Grid Row -->
     <div class="row pt-4">
-      <!-- Left Column: Image Carousel -->
-     <!-- Left Column: Image Carousel Showcase Grid -->
-<div
-  id="productImageCarousel"
-  class="carousel slide mb-4 col-md-5 col-12 shadow-sm rounded bg-white p-2 border"
-  data-bs-ride="carousel"
->
-  <!-- 🟢 ADDED: Carousel Indicators (Tells Bootstrap how many images exist) -->
-  <div class="carousel-indicators" v-if="allImages.length > 1">
-    <button
-      v-for="(img, index) in allImages"
-      :key="'ind-' + index"
-      type="button"
-      data-bs-target="#productImageCarousel"
-      :data-bs-slide-to="index"
-      :class="{ active: index === 0 }"
-      aria-current="true"
-      :aria-label="'Slide ' + (index + 1)"
-      style="filter: invert(1);" 
-    ></button>
-  </div>
+      <!-- Left Column: Image Carousel Showcase Grid -->
+      <div
+        id="productImageCarousel"
+        class="carousel slide mb-4 col-md-5 col-12 shadow-sm rounded bg-white p-2 border"
+        data-bs-ride="carousel"
+      >
+        <!-- Carousel Indicators -->
+        <div class="carousel-indicators" v-if="allImages.length > 1">
+          <button
+            v-for="(img, index) in allImages"
+            :key="'ind-' + index"
+            type="button"
+            data-bs-target="#productImageCarousel"
+            :data-bs-slide-to="index"
+            :class="{ active: index === 0 }"
+            aria-current="true"
+            :aria-label="'Slide ' + (index + 1)"
+            style="filter: invert(1);" 
+          ></button>
+        </div>
 
-  <!-- Carousel Slides Inner Shell -->
-  <div class="carousel-inner">
-    <div
-      class="carousel-item"
-      v-for="(img, index) in allImages"
-      :key="'slide-' + index"
-      :class="{ active: index === 0 }"
-    >
-      <img
-        :src="img"
-        class="img-fluid rounded object-fit-contain w-100"
-        style="max-height: 400px; min-height: 300px;"
-        alt="Product Image Gallery View"
-      />
-    </div>
-  </div>
+        <!-- Carousel Slides Inner Shell -->
+        <div class="carousel-inner">
+          <div
+            class="carousel-item"
+            v-for="(img, index) in allImages"
+            :key="'slide-' + index"
+            :class="{ active: index === 0 }"
+          >
+            <img
+              :src="img"
+              class="img-fluid rounded object-fit-contain w-100"
+              style="max-height: 400px; min-height: 300px;"
+              alt="Product Image Gallery View"
+            />
+          </div>
+        </div>
 
-  <!-- Left & Right Arrow Navigation Controls -->
-  <button
-    class="carousel-control-prev"
-    type="button"
-    data-bs-target="#productImageCarousel"
-    data-bs-slide="prev"
-    v-if="allImages.length > 1"
-  >
-    <span class="carousel-control-prev-icon bg-dark rounded-circle p-2"></span>
-  </button>
-  <button
-    class="carousel-control-next"
-    type="button"
-    data-bs-target="#productImageCarousel"
-    data-bs-slide="next"
-    v-if="allImages.length > 1"
-  >
-    <span class="carousel-control-next-icon bg-dark rounded-circle p-2"></span>
-  </button>
-</div>
+        <!-- Navigation Controls -->
+        <button
+          class="carousel-control-prev"
+          type="button"
+          data-bs-target="#productImageCarousel"
+          data-bs-slide="prev"
+          v-if="allImages.length > 1"
+        >
+          <span class="carousel-control-prev-icon bg-dark rounded-circle p-2"></span>
+        </button>
+        <button
+          class="carousel-control-next"
+          type="button"
+          data-bs-target="#productImageCarousel"
+          data-bs-slide="next"
+          v-if="allImages.length > 1"
+        >
+          <span class="carousel-control-next-icon bg-dark rounded-circle p-2"></span>
+        </button>
+      </div>
 
       <!-- Right Column: Product Specs & Actions -->
       <div class="col-md-7 col-12 ps-md-5 pt-3 pt-md-0">
@@ -68,7 +67,7 @@
         <span
           class="badge bg-secondary-subtle text-secondary border px-3 py-2 mb-3 text-uppercase font-monospace fs-7"
         >
-          {{ category.name }}
+          {{ categoryName }}
         </span>
 
         <h3 class="fw-bold text-success mb-3">
@@ -89,9 +88,7 @@
         <div class="row g-3 align-items-center mb-4">
           <div class="col-sm-5">
             <div class="input-group">
-              <span class="input-group-text bg-light fw-semibold small"
-                >Qty</span
-              >
+              <span class="input-group-text bg-light fw-semibold small">Qty</span>
               <input
                 type="number"
                 class="form-control text-center"
@@ -126,7 +123,7 @@
       </div>
     </div>
 
-    <!-- Inside your existing ShowDatail.vue template layout -->
+    <!-- Installer Workspace Banner -->
     <div
       class="mt-4 p-3 bg-primary-subtle rounded border border-light-subtle shadow-xs"
     >
@@ -138,7 +135,6 @@
         selected local technician safely on-platform.
       </p>
 
-      <!-- 🟢 CASE A: Customer has not sent an installation request yet -->
       <button
         v-if="!activeContractRequest"
         type="button"
@@ -148,7 +144,6 @@
         👨‍🔧 Request Installation Setup
       </button>
 
-      <!-- 🟡 CASE B: Request is sent, but installer hasn't responded yet (Chat is locked) -->
       <div
         v-else-if="activeContractRequest.status === 'pending'"
         class="d-flex align-items-center gap-2"
@@ -161,7 +156,6 @@
         >
       </div>
 
-      <!-- 🔵 CASE C: Installer accepted/quoted the contract (🟢 CHAT ACCESS UNLOCKED) -->
       <div v-else-if="activeContractRequest.status !== 'pending'">
         <RouterLink
           :to="{
@@ -197,9 +191,7 @@
       </div>
 
       <button
-        v-if="
-          activeContractRequest && activeContractRequest.status === 'completed'
-        "
+        v-if="activeContractRequest && activeContractRequest.status === 'completed'"
         class="btn btn-danger mt-2"
         @click="openDispute(activeContractRequest)"
       >
@@ -214,11 +206,8 @@
       </router-link>
     </div>
 
-    <!-- ========================================================================= -->
-    <!-- 🌟 NEW ARRANGEMENT: PRODUCT REVIEWS AND RATING LAYOUT SECTION -->
-    <!-- ========================================================================= -->
+    <!-- Product Reviews Section -->
     <div class="row g-4 border-top pt-5 mt-5">
-      <!-- Left Review Grid Panel: Past Comments Feed -->
       <div class="col-lg-7">
         <div class="d-flex justify-content-between align-items-center mb-4">
           <h4 class="fw-bold text-dark mb-0">
@@ -228,14 +217,12 @@
             class="bg-light border rounded px-3 py-2 d-inline-flex align-items-center"
           >
             <span class="text-warning me-2 fs-5">★</span>
-            <!--  TO THIS (Safe fallback checking syntax) -->
             <span class="fw-bold text-dark">
               {{ averageRating ? averageRating.toFixed(1) : "0.0" }}
             </span>
           </div>
         </div>
 
-        <!--  CORRECT: Safe length validation fallback check -->
         <div
           v-if="!reviews || reviews.length === 0"
           class="text-center py-5 bg-light rounded border border-dashed"
@@ -243,7 +230,6 @@
           <p class="text-muted mb-0">No item reviews submitted yet.</p>
         </div>
 
-        <!-- Scrollable Reviews Thread Feed Container -->
         <div
           class="reviews-scroll-feed pe-1"
           v-else
@@ -262,7 +248,6 @@
                   rev.user?.name || "Verified Buyer"
                 }}</strong>
                 <div class="text-warning small font-monospace">
-                  <!-- Structural Star Array Mapping Loop -->
                   <span v-for="i in 5" :key="i">{{
                     i <= rev.rating ? "★" : "☆"
                   }}</span>
@@ -279,7 +264,7 @@
         </div>
       </div>
 
-      <!-- Right Review Grid Panel: Interactive Entry Feedback Form Container -->
+      <!-- Right Review Panel -->
       <div class="col-lg-5">
         <div
           class="card bg-light border-0 p-4 sticky-md-top"
@@ -287,7 +272,6 @@
         >
           <h5 class="fw-bold text-dark mb-3">Write a Product Review</h5>
 
-          <!-- Interactive Star Input Element System Layout -->
           <div class="mb-3">
             <label class="form-label d-block text-muted small fw-semibold"
               >Your Product Rating</label
@@ -306,7 +290,6 @@
             </div>
           </div>
 
-          <!-- Text Comment Area Box Form Entry Section -->
           <div class="mb-2">
             <label class="form-label text-muted small fw-semibold"
               >Share Your Opinion</label
@@ -316,18 +299,16 @@
               class="form-control form-control-sm"
               rows="4"
               :maxlength="maxCharacters"
-              placeholder="What did you like or dislike about this product? How is the hardware performance quality?"
+              placeholder="What did you like or dislike about this product?"
               required
             ></textarea>
           </div>
 
-          <!-- Real-Time Input Character Counters Tracker Elements UI -->
           <div class="d-flex justify-content-between align-items-center mb-3">
             <span class="small text-muted" style="font-size: 0.75rem"
               >Keep your feedback concise.</span
             >
             <span :class="characterCounterClass" style="font-size: 0.8rem">
-              <!-- 🟢 OPTIMIZED: Safe against empty or null comment string clearing resets -->
               {{ maxCharacters - (comment ? comment.length : 0) }} /
               {{ maxCharacters }} left
             </span>
@@ -350,9 +331,7 @@
       </div>
     </div>
 
-    <!-- ========================================================================= -->
-    <!-- INSTALLATION ADDRESS INPUT MODAL CONTAINER -->
-    <!-- ========================================================================= -->
+    <!-- Address Modal -->
     <div
       class="modal fade"
       id="productPageAddressModal"
@@ -376,7 +355,6 @@
           </div>
           <form @submit.prevent="submitSingleInstallerRequest">
             <div class="modal-body py-4">
-              <!-- Step 1: Select an Approved Installer from a Dropdown -->
               <div class="mb-3">
                 <label class="form-label small fw-semibold"
                   >Choose Your Nearby Technician</label
@@ -407,7 +385,6 @@
                 </div>
               </div>
 
-              <!-- Step 2: Provide Location Address -->
               <div class="mb-3">
                 <label class="form-label small fw-semibold"
                   >Installation Site Address</label
@@ -416,7 +393,7 @@
                   v-model="customerAddress"
                   class="form-control"
                   rows="3"
-                  placeholder="Provide complete street address, apartment number, and city..."
+                  placeholder="Provide complete street address..."
                   maxlength="150"
                   required
                 ></textarea>
@@ -453,12 +430,13 @@
 </template>
 
 <script>
-import { useAuthStore } from "@/stores/auth"; // ✅ Imports your standard customer profile store
-//import { useInstallerStore } from "@/stores/installer";
+import { useAuthStore } from "@/stores/auth";
 import { useCartStore } from "@/stores/CartStore";
 import axios from "axios";
+import * as bootstrap from "bootstrap"; // 🟢 Added Bootstrap JS import
 
 export default {
+  name: "ShowDetail",
   props: {
     baseURL: String,
     categories: Array,
@@ -468,116 +446,121 @@ export default {
     return {
       authStore: useAuthStore(),
       product: {},
-      category: {},
       quantity: 1,
       token: null,
+      productId: null,
 
-      // 🟢 FIXED: Ensures .length never reads as undefined on initial render mount
       reviews: [],
       rating: 0,
       comment: "",
       maxCharacters: 300,
       isSubmittingReview: false,
 
-      // Installer properties
       approvedInstallers: [],
       selectedInstallerId: "",
       customerAddress: "",
       isSubmitting: false,
 
-      // 🟢 ADDED: Tracks active escrow request instances for this page item
       activeContractRequest: null,
-
       bsModalInstance: null,
     };
   },
   computed: {
+    categoryName() {
+      if (!this.product || !this.product.category) return "Uncategorized";
+      if (typeof this.product.category === "object") {
+        return this.product.category.name || "Uncategorized";
+      }
+      const matchedCat = (this.categories || []).find(
+        (c) => (c.id || c._id) == this.product.category
+      );
+      return matchedCat ? matchedCat.name : "Uncategorized";
+    },
+
     averageRating() {
-      // 🟢 DEFENSIVE CHECK: If reviews is missing, empty, or not an array, return 0 instantly
-      if (
-        !this.reviews ||
-        !Array.isArray(this.reviews) ||
-        this.reviews.length === 0
-      ) {
+      if (!this.reviews || !Array.isArray(this.reviews) || this.reviews.length === 0) {
         return 0;
       }
-
       const total = this.reviews.reduce((sum, r) => sum + r.rating, 0);
       return total / this.reviews.length;
     },
 
     characterCounterClass() {
-      // Falls back to a default max count if maxCharacters isn't defined in data()
       const maxChars = this.maxCharacters || 300;
       const currentLength = this.comment ? this.comment.length : 0;
       const remaining = maxChars - currentLength;
 
-      if (remaining <= 30) {
-        return "small fw-bold text-danger animate-pulse";
-      }
-      if (remaining <= 75) {
-        return "small fw-semibold text-warning";
-      }
+      if (remaining <= 30) return "small fw-bold text-danger animate-pulse";
+      if (remaining <= 75) return "small fw-semibold text-warning";
       return "small text-success";
     },
 
-  allImages() {
-    // Fallbacks to guarantee a flattened array of strings even during slow backend loads
-    const mainImage = this.product?.image;
-    let extraImages = [];
+    allImages() {
+      const mainImage = this.product?.image;
+      let extraImages = [];
 
-    if (this.product?.images) {
-      if (Array.isArray(this.product.images)) {
-        extraImages = this.product.images;
-      } else if (typeof this.product.images === 'string') {
-        try {
-          extraImages = JSON.parse(this.product.images);
-        } catch (e) {
-          extraImages = [this.product.images];
+      if (this.product?.images) {
+        if (Array.isArray(this.product.images)) {
+          extraImages = this.product.images;
+        } else if (typeof this.product.images === "string") {
+          try {
+            extraImages = JSON.parse(this.product.images);
+          } catch (e) {
+            extraImages = [this.product.images];
+          }
         }
       }
-    }
 
-    // Merges main thumbnail image and gallery array together, filtering out null/undefined entries
-    const combined = [mainImage, ...extraImages];
-    return combined.filter(Boolean);
-  },
-  // Keep your existing averageRating() and characterCounterClass() here...
-
+      return [mainImage, ...extraImages].filter(Boolean);
+    },
   },
   methods: {
-    async openDispute(request) {
-      const { value: reason } = await this.$swal({
-        title: "Open Dispute",
-        input: "text",
-        inputPlaceholder: "Enter reason...",
-        showCancelButton: true,
-      });
+    injectProductSchema() {
+      const existingScript = document.getElementById("product-schema-jsonld");
+      if (existingScript) existingScript.remove();
 
-      if (!reason) return;
+      const productId = this.product.id || this.product._id;
+      if (!productId) return;
 
-      try {
-        await axios.put(
-          `${this.baseURL}requests/${request._id}/dispute`,
-          { reason },
-          {
-            headers: {
-              Authorization: `Bearer ${this.authStore.token}`,
-            },
-          },
-        );
+      const schemaData = {
+        "@context": "https://schema.org/",
+        "@type": "Product",
+        name: this.product.name,
+        image: this.allImages,
+        description: this.product.discription || this.product.richDiscription,
+        sku: productId,
+        brand: {
+          "@type": "Brand",
+          name: this.product.brand || "ShoppersFix",
+        },
+        offers: {
+          "@type": "Offer",
+          url: `https://www.shoppersfix.com/product/show/${productId}`,
+          priceCurrency: "NGN",
+          price: this.product.price,
+          availability:
+            this.product.countInStock > 0
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+        },
+      };
 
-        this.$swal("Dispute opened!", "", "success");
-
-        // refresh request
-        await this.checkActiveUserInstallationRequest(this.product.id);
-      } catch (err) {
-        console.error(err);
+      if (this.reviews && this.reviews.length > 0) {
+        schemaData.aggregateRating = {
+          "@type": "AggregateRating",
+          ratingValue: this.averageRating.toFixed(1),
+          reviewCount: this.reviews.length,
+        };
       }
+
+      const script = document.createElement("script");
+      script.id = "product-schema-jsonld";
+      script.type = "application/ld+json";
+      script.text = JSON.stringify(schemaData);
+      document.head.appendChild(script);
     },
 
-    // 🟢 ADDED METHOD: Automatically syncs request states from MongoDB when the product loads
-    async checkSpecificInstallerRequestStatus() {
+    async checkSpecificInstallerRequestStatus(prodId) {
       if (!this.authStore.token) return;
 
       try {
@@ -586,29 +569,26 @@ export default {
           this.authStore.user?._id ||
           this.authStore.userId;
 
+        const targetId = prodId || this.productId;
+
         const res = await axios.get(
-          `${this.baseURL}requests/check-installer-status/${this.id}/${customerId}`,
+          `${this.baseURL}requests/check-installer-status/${targetId}/${customerId}`,
           {
             headers: { Authorization: `Bearer ${this.authStore.token}` },
-          },
+          }
         );
 
         this.activeContractRequest = res.data || null;
       } catch (err) {
-        console.error(
-          "Error evaluating installer profile request mappings:",
-          err,
-        );
+        console.error("Error evaluating installer request state:", err);
         this.activeContractRequest = null;
       }
     },
 
-    // 1. Opens the installation form overlay window
     async openInstallationModal() {
-      // 🔐 Security boundary guard: Force customer authorization sequence checks
       if (!this.authStore.token) {
         this.$swal({
-          text: "Please log into your customer account first to submit service bookings.",
+          text: "Please log into your customer account first.",
           icon: "info",
         });
         this.$router.push("/login");
@@ -616,47 +596,31 @@ export default {
       }
 
       try {
-        // Fetch all active approved technicians automatically for selection lists
         const res = await axios.get(`${this.baseURL}installers/approved`, {
           headers: { Authorization: `Bearer ${this.authStore.token}` },
         });
         this.approvedInstallers = Array.isArray(res.data) ? res.data : [];
 
-        // Reset old address form memory states safely
         this.customerAddress = "";
         this.selectedInstallerId = "";
 
-        // Open the Bootstrap Modal overlay container
         const modalElement = document.getElementById("productPageAddressModal");
         if (modalElement) {
           this.bsModalInstance = new bootstrap.Modal(modalElement);
           this.bsModalInstance.show();
         }
       } catch (err) {
-        console.error("Error setting up marketplace options dialog:", err);
-        this.$swal({
-          text: "Could not load technicians records.",
-          icon: "warning",
-        });
+        console.error("Error setting up installer modal:", err);
       }
     },
 
     async submitSingleInstallerRequest() {
-      const customerId = this.authStore.userId;
+      const customerId = this.authStore.userId || this.authStore.user?.id;
       const customerPhone = this.authStore.user?.phone;
 
-      const installerId = this.selectedInstallerId; // ✅ FIXED
-
       if (!customerId) return alert("Customer ID missing.");
-
-      if (!installerId) {
-        return alert("Installer not selected properly.");
-      }
-
-      if (!customerPhone) {
-        return alert("Your phone number is missing. Update your profile.");
-      }
-
+      if (!this.selectedInstallerId) return alert("Installer not selected.");
+      if (!customerPhone) return alert("Phone number is missing.");
       if (!this.customerAddress || !this.customerAddress.trim()) {
         return alert("Please enter a valid address.");
       }
@@ -664,37 +628,33 @@ export default {
       this.isSubmitting = true;
 
       try {
-        const targetProductId = this.$route.params.id || null;
-
-
         await axios.post(
           `${this.baseURL}requests/send-to-installer`,
           {
             userId: customerId,
-            installerId,
+            installerId: this.selectedInstallerId,
             address: this.customerAddress.trim(),
             phone: String(customerPhone).trim(),
-            productId: targetProductId,
+            productId: this.productId,
           },
           {
             headers: { Authorization: `Bearer ${this.authStore.token}` },
-          },
+          }
         );
 
-      if (this.bsModalInstance) {
-  this.bsModalInstance.hide();
-}
+        if (this.bsModalInstance) {
+          this.bsModalInstance.hide();
+        }
 
-setTimeout(() => {
-  this.$swal({
-    title: "Request Sent! 🚀",
-    icon: "success"
-  });
-}, 300);
+        setTimeout(() => {
+          this.$swal({
+            title: "Request Sent! 🚀",
+            icon: "success",
+          });
+        }, 300);
 
         this.customerAddress = "";
-
-        await this.checkSpecificInstallerRequestStatus();
+        await this.checkSpecificInstallerRequestStatus(this.productId);
       } catch (err) {
         console.error("Frontend Submit Error:", err);
         alert(err.response?.data?.message || "Failed to send request.");
@@ -712,31 +672,27 @@ setTimeout(() => {
         return;
       }
 
-      const CartStore = useCartStore();
+      const cartStore = useCartStore();
       const qty = this.quantity > 0 ? this.quantity : 1;
-      CartStore.addToCart(product, qty);
+      cartStore.addToCart(product, qty);
       this.$swal({
         text: "Product added to cart successfully!",
         icon: "success",
       });
     },
-    checkout() {
-      this.$router.push({ name: "BillingAddress" });
-    },
+
     formatPrice(value) {
       return new Intl.NumberFormat("en-NG", {
         style: "currency",
         currency: "NGN",
         maximumFractionDigits: 2,
-      }).format(value);
+      }).format(value || 0);
     },
 
-    // Inside ShowDatail.vue -> methods
     async getReviews(productId) {
       try {
-        // ✅ PERFECT MATCH: Matches your corrected backend route layout perfectly
         const res = await axios.get(
-          `${this.baseURL}reviews/product/${productId}`,
+          `${this.baseURL}reviews/product/${productId}`
         );
         this.reviews = Array.isArray(res.data) ? res.data : [];
       } catch (err) {
@@ -750,14 +706,8 @@ setTimeout(() => {
         return;
       }
 
-      // 🟢 CAPTURE THE ID DIRECTLY FROM THE ROUTE URL
-      // If your route is /product/:id, this extracts the exact string we need
-      const exactProductId = this.$route.params.id || this.productId;
-
-      if (!exactProductId) {
-        alert(
-          "System Error: Product tracking ID could not be resolved from the current page URL.",
-        );
+      if (!this.productId) {
+        alert("System Error: Product tracking ID could not be resolved.");
         return;
       }
 
@@ -769,59 +719,49 @@ setTimeout(() => {
           `${this.baseURL}reviews`,
           {
             userId: customerId,
-            product: exactProductId, // Sending the guaranteed 24-character ID string
+            product: this.productId,
             rating: Number(this.rating),
             comment: this.comment.trim(),
           },
           {
             headers: { Authorization: `Bearer ${this.authStore.token}` },
-          },
+          }
         );
 
         alert("Review uploaded securely!");
         this.rating = 0;
         this.comment = "";
 
-        // Refresh the reviews on screen instantly
-        await this.getReviews(exactProductId);
+        await this.getReviews(this.productId);
       } catch (err) {
         console.error("Submission blocked:", err.response?.data || err.message);
         alert(
           "Submission Failed: " +
-            (err.response?.data?.message ||
-              "Invalid payload format sent to server."),
+            (err.response?.data?.message || "Invalid payload format sent.")
         );
       } finally {
         this.isSubmittingReview = false;
       }
     },
-
-    getStatusBadgeClass(status) {
-      const base = "badge px-3 py-2 text-uppercase font-monospace ";
-      if (status === "accepted")
-        return (
-          base + "bg-success-subtle text-success border border-success-subtle"
-        );
-      if (status === "rejected")
-        return (
-          base + "bg-danger-subtle text-danger border border-danger-subtle"
-        );
-      return (
-        base +
-        "bg-warning-subtle text-warning-emphasis border border-warning-subtle"
-      );
-    },
   },
+
   async mounted() {
-    const id = this.$route.params.id;
-    this.product = this.products.find((p) => p && p.id == id) || {};
-    this.category =
-      this.categories.find((c) => c.id == this.product.category?.id) || {};
+    this.productId = this.$route.params.id;
     this.token = localStorage.getItem("token");
 
-  if (this.product?.id) {
-  await this.checkSpecificInstallerRequestStatus();
-}
+    if (this.products && this.products.length > 0) {
+      this.product =
+        this.products.find(
+          (p) => p && (p.id == this.productId || p._id == this.productId)
+        ) || {};
+    }
+
+    await this.getReviews(this.productId);
+
+    if (this.productId) {
+      await this.checkSpecificInstallerRequestStatus(this.productId);
+      this.injectProductSchema();
+    }
 
     this.$emit("fetchData");
   },
@@ -829,24 +769,13 @@ setTimeout(() => {
 </script>
 
 <style scoped>
-.category {
-  font-weight: 400;
-}
-#wishlist-button {
-  background-color: #b9b9b9;
-}
 #add-to-cart-button {
   background-color: orangered;
   color: white;
 }
-.form-control {
-  width: 100%;
-}
-
 .card {
   border-radius: 10px;
 }
-
 .btn-sm {
   font-size: 12px;
 }

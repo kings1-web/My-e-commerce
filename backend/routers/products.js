@@ -132,47 +132,6 @@ router.get("/", async (req, res) => {
 
 
 
-router.get("/:id", async (req, res) => {
-  const product = await Product.findById(req.params.id).populate("category");
-
-  if (!product) {
-    res.status(500).json({ success: false });
-  }
-  res.send(product);
-});
-
-/*router.post("/", uploadOptions.single("image"), async (req, res) => {
-  const category = await Category.findById(req.body.category);
-  if (!category) return res.status(400).send("Invalid Category");
-
-  const file = req.file;
-  if (!file) return res.status(400).send("no image in the request");
-
-  const files = file.path.replace("/upload/", "/upload/w_800,h_800,q_auto,f_auto/");
-
- 
-
-  let product = new Product({
-    name: req.body.name,
-    discription: req.body.discription,
-    richDiscription: req.body.richDiscription,
-    image: files, //`${basePath}${fileName}`, // "http://localhost:3000/public/uploads/1mage-2323232"
-    brand: req.body.brand,
-    price: req.body.price,
-    category: req.body.category,
-    countInStock: req.body.countInStock,
-    rating: req.body.rating,
-    numReviews: req.body.numReviews,
-    isFeature: req.body.isFeature,
-  });
-  product = await product.save();
-  if (!product) return res.status(500).send("the product cannot be created");
-  res.send({
-    ...product._doc,
-    image:product.image.replace("/upload/", "/upload/w_800,h_800,q_auto,f_auto/")
-  });
-});*/
-
 router.post("/", uploadOptions.single("image"), async (req, res) => {
   try {
     const category = await Category.findById(req.body.category);
@@ -190,10 +149,10 @@ router.post("/", uploadOptions.single("image"), async (req, res) => {
       imagePublicId: result.public_id,
       brand: req.body.brand,
       price: req.body.price,
+      oldPrice: req.body.oldPrice || 0, // 🟢 Added missing oldPrice field!
       category: req.body.category,
       countInStock: req.body.countInStock,
-      rating: req.body.rating,
-      numReviews: req.body.numReviews,
+      
       isFeatured: req.body.isFeatured,
     });
 
@@ -204,52 +163,6 @@ router.post("/", uploadOptions.single("image"), async (req, res) => {
     res.status(500).send(error);
   }
 });
-
-/*router.put("/:id", uploadOptions.single("image"), async (req, res) => {
-  if (!mongoose.isValidObjectId(req.params.id)) {
-    return res.status(400).send("Invalid Product Id");
-  }
-
-  const category = await Category.findById(req.body.category);
-  if (!category) return res.status(400).send("Invalid Category");
-
-  const product = await Product.findById(req.params.id);
-  if (!product) return res.status(400).send("Invalid Product");
-
-  const file = req.file;
-
-  let imagepath=product.image;
-
-  if (file) {
-   
-   imagepath=file.path.replace("/upload/", "/upload/w_800,h_800,q_auto,f_auto/");   //`${basePath}${fileName}`;
-  }
-
-  const updateProduct = await Product.findByIdAndUpdate(
-    req.params.id,
-    {
-      name: req.body.name,
-      discription: req.body.discription,
-      richDiscription: req.body.richDiscription,
-      image:imagepath,
-      images: req.body.images,
-      brand: req.body.brand,
-      price: req.body.price,
-      category: req.body.category,
-      countInStock: req.body.countInStock,
-      rating: req.body.rating,
-      numReviews: req.body.numReviews,
-      isFeatured: req.body.isFeatured,
-    },
-    { new: true }
-  );
-  if (!updateProduct)
-    return res.status(500).send("the product cannot be updated");
-  res.send({
-    ...updateProduct._doc,
-    image:product.image.replace("/upload/", "/upload/w_800,h_800,q_auto,f_auto/")
-  });
-});*/
 
 router.put("/:id", uploadOptions.single("image"), async (req, res) => {
   try {
@@ -282,6 +195,7 @@ router.put("/:id", uploadOptions.single("image"), async (req, res) => {
          imagePublicId: imagePublicId,   // ✅ ADD HERE
         brand: req.body.brand,
         price: req.body.price,
+        oldPrice: req.body.oldPrice,
         category: req.body.category,
         countInStock: req.body.countInStock,
         rating: req.body.rating,
@@ -414,5 +328,71 @@ router.get("/get/featured/:count", async (req, res) => {
     }
   }
 );
+
+// 1. Fixed router.get("/:id")
+router.get("/:id", async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: "Invalid product ID" });
+    }
+
+    const product = await Product.findById(req.params.id).populate("category");
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+    
+    return res.status(200).send(product);
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 2. Fixed Sitemap Route (changed app.get to router.get)
+router.get('/sitemap.xml', async (req, res) => {
+  try {
+    const products = await Product.find({});
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://www.shoppersfix.com/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://www.shoppersfix.com/installers</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+
+    products.forEach((product) => {
+      const imageUrl = product.image || (product.images && product.images[0]);
+      const cleanTitle = product.name ? product.name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+
+      xml += `
+  <url>
+    <loc>https://www.shoppersfix.com/product/show/${product._id}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>${
+      imageUrl
+        ? `
+    <image:image>
+      <image:loc>${imageUrl}</image:loc>
+      <image:title>${cleanTitle}</image:title>
+    </image:image>`
+        : ''
+    }
+  </url>`;
+    });
+
+    xml += `\n</urlset>`;
+
+    res.header('Content-Type', 'application/xml');
+    res.send(xml);
+  } catch (error) {
+    res.status(500).end();
+  }
+});
 
 module.exports = router;

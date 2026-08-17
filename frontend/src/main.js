@@ -3,7 +3,8 @@ import { createPinia } from 'pinia'
 import App from './App.vue' 
 import router from './router' 
  import * as VueGtag from 'vue-gtag'
-import VueSweetalert2 from 'vue-sweetalert2' 
+import VueSweetalert2 from 'vue-sweetalert2'
+import "bootstrap/dist/js/bootstrap.bundle.min.js"; 
 
 const app = createApp(App) 
 const pinia = createPinia(); 

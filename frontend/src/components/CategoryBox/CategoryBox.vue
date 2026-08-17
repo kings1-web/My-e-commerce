@@ -50,7 +50,7 @@ export default {
 
   data() {
     return {
-      baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1/" || "https://royalgoods.onrender.com/api/v1/",
+      baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1/" || "https://shoppersfix.com/api/v1/",
       fallbackImage: "https://via.placeholder.com/300x200?text=No+Image",
     };
   },

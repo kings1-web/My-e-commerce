@@ -197,25 +197,6 @@ const router = createRouter({
   ],
 })
 
-/*router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore();
-  const InstallerStore=useInstallerStore();
-
-  const installerToken = localStorage.getItem("installerToken");
-
-  if (to.meta.requiresAuth && !authStore.token) {
-    next('/login');
-  } 
-  else if (to.meta.requiresAdmin && !authStore.isAdmin) {
-    next('/not-authorized');
-  } 
-  else if (to.meta.requiresInstaller && !InstallerStore.installer) {
-    next('/installer-login');
-  } 
-  else {
-    next();
-  }
-});*/
 
 
 
