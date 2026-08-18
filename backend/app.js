@@ -8,6 +8,10 @@ const mongoose = require("mongoose");
 const { Server } = require("socket.io");
 const cors = require("cors");
 
+// 🚀 IMPORTS FOR SEO & SITEMAP
+const { SitemapStream, streamToPromise } = require('sitemap');
+const { Readable } = require('stream');
+
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -83,7 +87,46 @@ app.use(
   })
 );
 
-app.use('/public/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+// =========================================================================
+// 🚀 PUBLIC SEO ROUTES (Must be placed BEFORE JWT middleware)
+// =========================================================================
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send("User-agent: *\nAllow: /\n\nSitemap: https://www.shoppersfix.com/sitemap.xml");
+});
+
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    res.header('Content-Type', 'application/xml');
+
+    const links = [
+      { url: '/', changefreq: 'daily', priority: 1.0 },
+      { url: '/installers', changefreq: 'weekly', priority: 0.8 },
+      { url: '/become-an-installer', changefreq: 'monthly', priority: 0.6 },
+      { url: '/signup', changefreq: 'monthly', priority: 0.5 },
+      { url: '/login', changefreq: 'monthly', priority: 0.5 }
+    ];
+
+    const products = await Product.find({}).select('id'); 
+    
+    products.forEach(product => {
+      links.push({ 
+        url: `/product/show/${product.id.toString()}`, 
+        changefreq: 'weekly', 
+        priority: 0.9 
+      });
+    });
+
+    const stream = new SitemapStream({ hostname: 'https://shoppersfix.com' });
+    const xmlBuffer = await streamToPromise(Readable.from(links).pipe(stream));
+    
+    return res.send(xmlBuffer.toString());
+  } catch (error) {
+    console.error("❌ Sitemap Generation Error:", error);
+    return res.status(500).end();
+  }
+});
+
 
 // Active the global JWT middleware scanner ONLY for authenticated methods
 app.use('/api', authJwt());
@@ -100,49 +143,7 @@ app.use(`${api}/installer-reviews`, installerReviewsRouter);
 app.use(`${api}/messages`, messagesRouter);
 app.use(`${api}/payments`, paymentsRouter); 
 
-// =========================================================================
-// 🚀 DYNAMIC XML SITEMAP GENERATOR ENGINE FOR GOOGLE SEARCH CONSOLE
-// =========================================================================
-const { SitemapStream, streamToPromise } = require('sitemap');
-const { Readable } = require('stream');
-// Named import matching your schema setup
-const { Product } = require("./models/product"); 
 
-app.get('/sitemap.xml', async (req, res) => {
-  try {
-    res.header('Content-Type', 'application/xml');
-
-    // 1. Establish your public client-facing static storefront URLs
-    const links = [
-      { url: '/', changefreq: 'daily', priority: 1.0 },
-      { url: '/installers', changefreq: 'weekly', priority: 0.8 },
-      { url: '/become-an-installer', changefreq: 'monthly', priority: 0.6 },
-      { url: '/signup', changefreq: 'monthly', priority: 0.5 },
-      { url: '/login', changefreq: 'monthly', priority: 0.5 }
-    ];
-
-    // 2. Fetch live database products utilizing the _id fields
-    const products = await Product.find({}).select('id'); 
-    
-    products.forEach(product => {
-      // MATCHES FRONTEND ROUTE: path:'/product/show/:id'
-      links.push({ 
-        url: `/product/show/${product.id.toString()}`, 
-        changefreq: 'weekly', 
-        priority: 0.9 
-      });
-    });
-
-    // 3. Stream data pipeline directly using your custom verified domain
-    const stream = new SitemapStream({ hostname: 'https://shoppersfix.com' });
-    const xmlBuffer = await streamToPromise(Readable.from(links).pipe(stream));
-    
-    return res.send(xmlBuffer.toString());
-  } catch (error) {
-    console.error("❌ Sitemap Generation Error:", error);
-    return res.status(500).end();
-  }
-});
 
 
 // SPA Fallback handling
