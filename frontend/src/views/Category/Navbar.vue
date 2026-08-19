@@ -1,22 +1,42 @@
 <template>
   <header class="bg-dark text-white sticky-top shadow-sm">
-    <!-- 🟢 1. TOP UTILITY BAR (Always Visible) -->
+    <!-- 🟢 TOP ANNOUNCEMENT & TRUST BAR -->
+    <div class="bg-primary text-white py-1 px-3 small d-none d-md-block border-bottom border-primary-subtle">
+      <div class="container-fluid d-flex justify-content-between align-items-center fs-7">
+        <div class="d-flex align-items-center gap-3">
+          <span><i class="bi bi-truck me-1"></i> Fast Ondo & Nationwide Delivery</span>
+          <span><i class="bi bi-shield-check me-1"></i> Quality Guaranteed</span>
+          <span><i class="bi bi-cash-stack me-1"></i> Pay on Delivery Available</span>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <a href="https://wa.me/2348000000000" target="_blank" class="text-white text-decoration-none fw-semibold">
+            <i class="bi bi-whatsapp me-1 text-success"></i> Order via WhatsApp
+          </a>
+          <span class="text-white-50">|</span>
+          <a href="tel:+2348000000000" class="text-white text-decoration-none">
+            <i class="bi bi-telephone-fill me-1"></i> Call Us
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🟢 1. MAIN NAVIGATION & SEARCH BAR -->
     <div class="container-fluid px-3 py-2 border-bottom border-secondary">
       <div class="d-flex align-items-center justify-content-between gap-2">
         
         <!-- Brand Logo -->
         <RouterLink class="navbar-brand d-flex align-items-center me-1 py-0" :to="{ name: 'home' }">
-          <img src="@/assets/logo.png" alt="SHOPPERSFIX Logo" class="navbar-logo" />
+          <img src="@/assets/logo.png" alt="SHOPPERSFIX Logo" class="navbar-logo bg-white" />
         </RouterLink>
 
         <!-- Search Bar Form -->
-        <form class="flex-grow-1 mx-2" style="max-width: 450px;" role="search" @submit.prevent="handleSearch">
+        <form class="flex-grow-1 mx-2" style="max-width: 480px;" role="search" @submit.prevent="handleSearch">
           <div class="position-relative">
             <input
-              class="form-control form-control-sm ps-4 pe-2 rounded-pill bg-light text-dark"
+              class="form-control form-control-sm ps-4 pe-5 rounded-pill bg-light text-dark"
               type="search"
               v-model="searchQuery"
-              placeholder="Search products..."
+              placeholder="Search plumbing, electrical, phone accessories..."
               aria-label="Search"
             />
             <button type="submit" class="btn position-absolute top-50 start-0 translate-middle-y ms-1 p-0 border-0 bg-transparent">
@@ -25,12 +45,12 @@
           </div>
         </form>
 
-        <!-- Action Controls (Installers, Cart, Role Switcher, Menu Toggler) -->
+        <!-- Action Controls -->
         <div class="d-flex align-items-center gap-2">
           
-          <!-- Installers Quick Link -->
-          <RouterLink to="/installers" class="btn btn-outline-light btn-sm fw-semibold text-nowrap d-none d-sm-inline-block">
-            Installers &rarr;
+          <!-- Hire Technician Quick Button -->
+          <RouterLink to="/installers" class="btn btn-warning btn-sm fw-bold text-nowrap d-none d-lg-inline-block shadow-xs">
+            🛠️ Hire a Pro
           </RouterLink>
 
           <!-- Cart Icon Badge -->
@@ -41,13 +61,13 @@
             </RouterLink>
           </div>
 
-          <!-- Role Switcher Dropdown (Visible on Desktop) -->
+          <!-- Role Switcher Dropdown (Desktop) -->
           <div
             class="nav-item dropdown d-none d-md-inline-block ms-1"
             v-if="isLoggedIn && authStore.roles && authStore.roles.length > 1"
           >
             <button
-              class="btn btn-primary btn-sm dropdown-toggle fw-bold shadow-xs px-2 py-1 rounded-pill d-flex align-items-center gap-1"
+              class="btn btn-outline-light btn-sm dropdown-toggle fw-bold shadow-xs px-2 py-1 rounded-pill d-flex align-items-center gap-1"
               type="button"
               id="roleSwitcherDropdown"
               data-bs-toggle="dropdown"
@@ -108,7 +128,28 @@
       </div>
     </div>
 
-    <!-- 🟢 2. SECONDARY COLLAPSIBLE DRAWER (Navigation Links & Mobile Actions) -->
+    <!-- 🟢 QUICK CATEGORY BAR (Drives Fast Browsing) -->
+    <div class="bg-dark border-bottom border-secondary-subtle py-1 px-3 d-none d-md-block">
+      <div class="container-fluid d-flex align-items-center justify-content-start gap-4 small fw-semibold">
+        <RouterLink to="/" class="text-light text-decoration-none hover-warning">
+          🛍️ Marketplace Home
+        </RouterLink>
+        <a href="#feature-product" class="text-white-50 text-decoration-none hover-warning">
+          ⚡ Electrical Fittings
+        </a>
+        <a href="#feature-product" class="text-white-50 text-decoration-none hover-warning">
+          🚰 Plumbing Accessories
+        </a>
+        <a href="#feature-product" class="text-white-50 text-decoration-none hover-warning">
+          📱 Phone Accessories
+        </a>
+        <RouterLink to="/installers" class="text-warning text-decoration-none ms-auto">
+          🔧 Book Handyman Services &rarr;
+        </RouterLink>
+      </div>
+    </div>
+
+    <!-- 🟢 2. SECONDARY COLLAPSIBLE DRAWER -->
     <div v-if="isMenuOpen" class="bg-dark border-bottom border-secondary py-3 px-3 animate-slide-down">
       <div class="container-fluid d-flex flex-column gap-3">
         
@@ -117,17 +158,17 @@
           <!-- Browse Dropdown -->
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle text-light p-0 fw-semibold" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              Browse
+              Browse Categories
             </a>
             <ul class="dropdown-menu shadow">
               <li>
                 <RouterLink class="dropdown-item" :to="{ name: 'home' }" @click="closeMenu">
-                  Home
+                  Marketplace Home
                 </RouterLink>
               </li>
               <li>
                 <RouterLink class="dropdown-item" :to="{ name: 'UserOrders' }" @click="closeMenu">
-                  Orders
+                  My Orders
                 </RouterLink>
               </li>
               <li v-if="isLoggedIn && authStore.roles && (authStore.roles.includes('admin') || isAdmin)">
@@ -161,7 +202,7 @@
             <ul class="dropdown-menu shadow">
               <li v-if="!isLoggedIn">
                 <RouterLink class="dropdown-item" :to="{ name: 'SignUp' }" @click="closeMenu">
-                  SignUp
+                  Sign Up
                 </RouterLink>
               </li>
               <li v-if="!isLoggedIn">
@@ -182,11 +223,16 @@
             </ul>
           </li>
 
-          <!-- Mobile Only Installers Link -->
+          <!-- Mobile Only Links -->
           <li class="nav-item d-sm-none pt-1">
             <RouterLink to="/installers" class="nav-link text-warning p-0 fw-semibold" @click="closeMenu">
-              🛠️ Installers &rarr;
+              🛠️ Hire a Technician &rarr;
             </RouterLink>
+          </li>
+          <li class="nav-item d-sm-none pt-1">
+            <a href="https://wa.me/2348000000000" target="_blank" class="nav-link text-success p-0 fw-semibold">
+              💬 Direct WhatsApp Order
+            </a>
           </li>
         </ul>
 
@@ -320,9 +366,10 @@ export default {
 
 <style scoped>
 .navbar-logo {
-  height: 38px;
+  height: 28px;
   width: auto;
   object-fit: contain;
+  border-radius: 40%;
 }
 
 #nav-cart-count {
@@ -340,6 +387,14 @@ export default {
   top: -6px;
   right: -8px;
   z-index: 5;
+}
+
+.fs-7 {
+  font-size: 0.8rem;
+}
+
+.hover-warning:hover {
+  color: #ffc107 !important;
 }
 
 .shadow-xs {

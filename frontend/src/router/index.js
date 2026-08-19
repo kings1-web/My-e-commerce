@@ -13,6 +13,7 @@ import ListProduct from '@/views/Category/ListProduct.vue'
 import SignUp from '@/views/SignUp.vue'
 import Login from '@/views/Login.vue'
 import Cart from '@/views/Cart.vue'
+import About from "@/views/About.vue"; // or path to your About.vue component
 import Page from '@/views/Category/Page.vue'
 import Success from '@/views/payment/Success.vue'
 import Failure from '@/views/payment/Failure.vue'
@@ -25,7 +26,9 @@ import InstallerRegister from "@/views/InstallerRegister.vue";
 import InstallerLogin from "@/views/InstallerLogin.vue";
 import StarRating from '@/components/StarRating.vue'
 import Installers from '@/views/Installers.vue'
-import { useInstallerStore } from "@/stores/installer";
+import ReturnPolicy from "@/views/ReturnPolicy.vue";
+import Terms from "@/views/Terms.vue";
+import PrivacyPolicy from "@/views/PrivacyPolicy.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,6 +38,26 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
     },
+    {
+    path: "/about",
+    name: "About",
+    component: About,
+  },
+  {
+    path: "/return-policy",
+    name: "ReturnPolicy",
+    component: ReturnPolicy,
+  },
+  {
+    path: "/terms",
+    name: "Terms",
+    component: Terms,
+  },
+  {
+    path: "/privacy-policy",
+    name: "PrivacyPolicy",
+    component: PrivacyPolicy,
+  },
      //category detail page
      {
       path:'/category/show/:id?',

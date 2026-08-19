@@ -1,59 +1,77 @@
 <template>
-  <div class="product-card">
-    <!-- IMAGE -->
-    <RouterLink :to="{ name: 'ShowDetails', params: { id: product.id } }">
-      <div class="image-wrapper">
-        <img
-          :src="product.image || fallbackImage"
-          alt="product image"
-        />
-      </div>
-    </RouterLink>
-
-    <!-- CONTENT -->
-    <div class="card-content">
+  <div class="product-card w-100 d-flex flex-column justify-content-between">
+    <div>
+      <!-- IMAGE -->
       <RouterLink :to="{ name: 'ShowDetails', params: { id: product.id } }">
-        <h5 class="title">
-          {{ shortenText(product.name || 'No Name', 20) }}
-
-        </h5>
+        <div class="image-wrapper">
+          <img
+            :src="product.image || fallbackImage"
+            alt="product image"
+          />
+        </div>
       </RouterLink>
 
-      <!-- Inside ProductBox.vue Template, place this right below the title RouterLink -->
-<div class="rating-container mb-2">
-  <div class="d-flex align-items-center gap-1">
-    <!-- Star Array Loop Display Segment -->
-    <span class="stars text-warning small">
-      <i 
-        v-for="star in 5" 
-        :key="star" 
-        :class="getStarClass(product.averageRating || 0, star)"
-      ></i>
-    </span>
-    <!-- Review Numerical Text Metric metadata -->
-    <span class="text-muted text-xs ms-1" style="font-size: 0.75rem;">
-      ({{ product.averageRating ? product.averageRating.toFixed(1) : '0.0' }})
-    </span>
-  </div>
-</div>
+      <!-- CONTENT -->
+      <div class="card-content">
+        <RouterLink :to="{ name: 'ShowDetails', params: { id: product.id } }">
+          <h5 class="title m-0">
+            {{ shortenText(product.name || 'No Name', 22) }}
+          </h5>
+        </RouterLink>
 
+        <!-- RATING CONTAINER -->
+        <div class="rating-container my-1">
+          <div class="d-flex align-items-center gap-1">
+            <span class="stars text-warning small">
+              <i 
+                v-for="star in 5" 
+                :key="star" 
+                :class="getStarClass(product.averageRating || 0, star)"
+              ></i>
+            </span>
+            <span class="text-muted text-xs ms-1">
+              ({{ product.averageRating ? product.averageRating.toFixed(1) : '0.0' }})
+            </span>
+          </div>
+        </div>
 
-          <p>{{ shortenText(product.discription || 'No Description', 20) }}</p>
+        <p class="description text-muted small my-1">
+          {{ shortenText(product.discription || 'No Description', 25) }}
+        </p>
 
+        <p class="price my-1">
+          {{ formatPrice(product.price) }}
+        </p>
 
-      <p class="price">
-        {{ formatPrice(product.price) }}
-      </p>
+        <p class="brand text-muted small mb-2">
+          <strong>Brand:</strong> {{ product.brand || 'Generic' }}
+        </p>
+      </div>
+    </div>
 
-      <p class="brand">
-        <strong>Brand:</strong>
-        {{ product.brand || 'N/A' }}
-      </p>
+    <!-- 🟢 DIRECT BUY BUTTONS (Reduces friction for instant purchases) -->
+    <div class="px-3 pb-3 pt-0">
+      <div class="d-flex flex-column gap-2">
+        <button 
+          class="btn btn-primary btn-sm w-100 fw-bold d-flex align-items-center justify-content-center gap-1"
+          @click="addToCart"
+        >
+          <i class="bi bi-cart-plus"></i> Add to Cart
+        </button>
+        
+        <a 
+          :href="whatsappOrderUrl" 
+          target="_blank" 
+          class="btn btn-outline-success btn-sm w-100 fw-semibold d-flex align-items-center justify-content-center gap-1"
+        >
+          <i class="bi bi-whatsapp"></i> Buy via WhatsApp
+        </a>
+      </div>
 
       <!-- ACTIONS (ADMIN ONLY) -->
       <div
         v-if="$route.name === 'AdminProduct'"
-        class="actions"
+        class="actions mt-2 pt-2 border-top"
       >
         <RouterLink :to="{ name: 'EditProduct', params: { id: product.id } }">
           <button class="btn edit">Edit</button>
@@ -73,7 +91,7 @@
 
 <script>
 import axios from "axios";
-import { onMounted } from "vue";
+import { useCartStore } from "@/stores/CartStore";
 
 export default {
   name: "ProductBox",
@@ -81,37 +99,61 @@ export default {
 
   data() {
     return {
-      baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1/" || "https://royalgoods.onrender.com/api/v1/",
+      baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1/",
       fallbackImage: "https://via.placeholder.com/300x200?text=No+Image",
     };
   },
 
-  methods: {
-
-     // 🟢 ADDED: Dynamically calculates star configurations on product box cards
-  getStarClass(avgRating, starIndex) {
-    if (avgRating >= starIndex) {
-      return 'bi bi-star-fill'; // Full golden star icon font mapping
-    } else if (avgRating >= starIndex - 0.5) {
-      return 'bi bi-star-half'; // Half golden star split rule
-    } else {
-      return 'bi bi-star'; // Empty dark icon contour rule boundary
+  computed: {
+    whatsappOrderUrl() {
+      const text = encodeURIComponent(
+        `Hello ShoppersFix, I want to order "${this.product.name}" priced at ${this.formatPrice(this.product.price)}.`
+      );
+      return `https://wa.me/2348000000000?text=${text}`;
     }
   },
 
+  methods: {
+    addToCart() {
+      const cartStore = useCartStore();
+      if (typeof cartStore.addToCart === "function") {
+        cartStore.addToCart(this.product);
+      }
+      if (this.$swal) {
+        this.$swal({
+          text: `${this.product.name} added to cart!`,
+          icon: "success",
+          toast: true,
+          position: "top-end",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      }
+    },
+
+    getStarClass(avgRating, starIndex) {
+      if (avgRating >= starIndex) {
+        return 'bi bi-star-fill';
+      } else if (avgRating >= starIndex - 0.5) {
+        return 'bi bi-star-half';
+      } else {
+        return 'bi bi-star';
+      }
+    },
+
     shortenText(text, length) {
-    if (!text) return "";
-    return text.length > length
-      ? text.substring(0, length) + "..."
-      : text;
-  },
+      if (!text) return "";
+      return text.length > length
+        ? text.substring(0, length) + "..."
+        : text;
+    },
 
     formatPrice(value) {
       if (!value) return "₦0";
       return new Intl.NumberFormat("en-NG", {
         style: "currency",
         currency: "NGN",
-        maximumFractionDigits: 2,
+        maximumFractionDigits: 0,
       }).format(value);
     },
 
@@ -130,120 +172,92 @@ export default {
 
         this.$emit("product-deleted", this.product.id);
 
-        this.$swal({
-          text: "Product deleted successfully",
-          icon: "success",
-        });
+        if (this.$swal) {
+          this.$swal({
+            text: "Product deleted successfully",
+            icon: "success",
+          });
+        }
       } catch (err) {
         console.error("Error deleting product:", err);
-
-        this.$swal({
-          text: "Failed to delete product!",
-          icon: "error",
-        });
+        if (this.$swal) {
+          this.$swal({
+            text: "Failed to delete product!",
+            icon: "error",
+          });
+        }
       }
     },
   },
-   
 };
 </script>
 
 <style scoped>
+.product-card {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #eee;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.image-wrapper {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  background-color: #f8f9fa;
+}
+
+.image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.image-wrapper:hover img {
+  transform: scale(1.05);
+}
+
+.card-content {
+  padding: 12px 15px;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+}
 
 .rating-container {
   display: flex;
   align-items: center;
-  height: 20px;
 }
+
 .stars i {
   margin-right: 1px;
 }
+
 .text-xs {
   font-size: 11px;
 }
 
-
-
-.product-card {
-  line-height: 12px;
-  background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-}
-
-.product-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-/* IMAGE */
-.image-wrapper {
-  width: 100%;
-  height: 200px;
-  overflow: hidden;
-}
-
-.image-wrapper img {
-  
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s ease;
-}
-
-.image-wrapper:hover img {
-  transform: scale(1.1);
-}
-
-/* CONTENT */
-.card-content {
-  padding: 15px;
-}
-
-.title {
-  font-size: 15px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 6px;
-
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .price {
-  color: #111;
+  color: #d9534f;
   font-weight: 700;
   font-size: 16px;
-  margin-bottom: 6px;
 }
 
-.brand {
-  font-size: 13px;
-  color: #777;
-  margin-bottom: 12px;
-
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ACTION BUTTONS */
 .actions {
   display: flex;
   justify-content: space-between;
   gap: 6px;
-}
-
-.btn {
-  flex: 1;
-  border: none;
-  padding: 6px;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: 0.2s;
 }
 
 .btn.edit {
@@ -251,26 +265,14 @@ export default {
   color: white;
 }
 
-.btn.edit:hover {
-  background: #0056b3;
-}
-
 .btn.upload {
   background: #6c757d;
   color: white;
 }
 
-.btn.upload:hover {
-  background: #545b62;
-}
-
 .btn.delete {
   background: #dc3545;
   color: white;
-}
-
-.btn.delete:hover {
-  background: #a71d2a;
 }
 
 a {

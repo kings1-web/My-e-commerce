@@ -16,70 +16,92 @@
       class="mySwiper"
     >
       <SwiperSlide v-for="product in products" :key="product.id || product._id">
-        <div class="product-card">
-          <!-- DISCOUNT BADGE (Handles String/Number types safely) -->
-          <span
-            v-if="Number(product.oldPrice) > Number(product.price)"
-            class="discount-badge"
-          >
-            -{{ getDiscount(product.oldPrice, product.price) }}%
-          </span>
-
-          <RouterLink :to="{ name: 'ShowDetails', params: { id: product.id || product._id } }">
-            <div class="image-wrapper">
-              <img :src="product.image" alt="product image" />
-            </div>
-          </RouterLink>
-
-          <div class="card-content">
-            <RouterLink
-              :to="{ name: 'ShowDetails', params: { id: product.id || product._id } }"
+        <div class="product-card d-flex flex-column justify-content-between h-100">
+          <div>
+            <!-- DISCOUNT BADGE -->
+            <span
+              v-if="Number(product.oldPrice) > Number(product.price)"
+              class="discount-badge"
             >
-              <p class="title">
-                {{ truncate(product.name, 25) }}
-              </p>
+              -{{ getDiscount(product.oldPrice, product.price) }}%
+            </span>
+
+            <RouterLink :to="{ name: 'ShowDetails', params: { id: product.id || product._id } }">
+              <div class="image-wrapper">
+                <img :src="product.image" alt="product image" />
+              </div>
             </RouterLink>
 
-            <div class="rating-box mb-2">
-              <div class="d-flex align-items-center gap-1">
-                <span
-                  class="stars text-warning small"
-                  style="font-size: 0.8rem; color: #ffc107"
-                >
-                  <i
-                    v-for="star in 5"
-                    :key="star"
-                    :class="getStarClass(product.averageRating || product.rating || 0, star)"
-                  ></i>
+            <div class="card-content">
+              <RouterLink
+                :to="{ name: 'ShowDetails', params: { id: product.id || product._id } }"
+              >
+                <p class="title m-0">
+                  {{ truncate(product.name, 22) }}
+                </p>
+              </RouterLink>
+
+              <div class="rating-box my-1">
+                <div class="d-flex align-items-center gap-1">
+                  <span
+                    class="stars text-warning small"
+                    style="font-size: 0.8rem; color: #ffc107"
+                  >
+                    <i
+                      v-for="star in 5"
+                      :key="star"
+                      :class="getStarClass(product.averageRating || product.rating || 0, star)"
+                    ></i>
+                  </span>
+                  <span class="text-muted ms-1" style="font-size: 0.75rem">
+                    ({{
+                      product.averageRating
+                        ? product.averageRating.toFixed(1)
+                        : (product.rating ? Number(product.rating).toFixed(1) : "0.0")
+                    }})
+                  </span>
+                </div>
+              </div>
+
+              <!-- PRICE -->
+              <div class="price-box my-1">
+                <span class="price">
+                  {{ formatPrice(product.price) }}
                 </span>
-                <span class="text-muted ms-1" style="font-size: 0.75rem">
-                  ({{
-                    product.averageRating
-                      ? product.averageRating.toFixed(1)
-                      : (product.rating ? Number(product.rating).toFixed(1) : "0.0")
-                  }})
+
+                <span v-if="Number(product.oldPrice) > Number(product.price)" class="old-price">
+                  {{ formatPrice(product.oldPrice) }}
                 </span>
               </div>
+
+              <p class="brand text-muted small mb-2">
+                <strong>Brand:</strong>
+                {{ truncate(product.brand || "Unknown", 15) }}
+              </p>
             </div>
+          </div>
 
-            <!-- PRICE -->
-            <div class="price-box">
-              <span class="price">
-                {{ formatPrice(product.price) }}
-              </span>
-
-              <span v-if="Number(product.oldPrice) > Number(product.price)" class="old-price">
-                {{ formatPrice(product.oldPrice) }}
-              </span>
+          <!-- 🟢 DIRECT ACTION BUTTONS -->
+          <div class="p-2 pt-0">
+            <div class="d-flex flex-column gap-2">
+              <button 
+                class="btn btn-primary btn-sm w-100 fw-bold d-flex align-items-center justify-content-center gap-1"
+                @click="addToCart(product)"
+              >
+                <i class="bi bi-cart-plus"></i> Add to Cart
+              </button>
+              
+              <a 
+                :href="getWhatsappUrl(product)" 
+                target="_blank" 
+                class="btn btn-outline-success btn-sm w-100 fw-semibold d-flex align-items-center justify-content-center gap-1"
+              >
+                <i class="bi bi-whatsapp"></i> Buy via WhatsApp
+              </a>
             </div>
-
-            <p class="brand">
-              <strong>Brand:</strong>
-              {{ truncate(product.brand || "Unknown", 15) }}
-            </p>
 
             <!-- ADMIN ACTIONS -->
-            <div v-if="$route.name === 'AdminProduct'" class="actions">
+            <div v-if="$route.name === 'AdminProduct'" class="actions mt-2 pt-2 border-top">
               <RouterLink
                 :to="{ name: 'EditProduct', params: { id: product.id || product._id } }"
               >
@@ -109,6 +131,7 @@ import { Swiper, SwiperSlide } from "swiper/vue";
 import "swiper/css";
 import "swiper/css/navigation";
 import { Navigation, Autoplay } from "swiper/modules";
+import { useCartStore } from "@/stores/CartStore";
 
 export default {
   name: "FeaturedCarousel",
@@ -138,6 +161,30 @@ export default {
   },
 
   methods: {
+    addToCart(product) {
+      const cartStore = useCartStore();
+      if (typeof cartStore.addToCart === "function") {
+        cartStore.addToCart(product);
+      }
+      if (this.$swal) {
+        this.$swal({
+          text: `${product.name} added to cart!`,
+          icon: "success",
+          toast: true,
+          position: "top-end",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      }
+    },
+
+    getWhatsappUrl(product) {
+      const text = encodeURIComponent(
+        `Hello ShoppersFix, I want to order "${product.name}" priced at ${this.formatPrice(product.price)}.`
+      );
+      return `https://wa.me/2348000000000?text=${text}`;
+    },
+
     getStarClass(avgRating, starIndex) {
       if (avgRating >= starIndex) {
         return "bi bi-star-fill";
@@ -168,6 +215,7 @@ export default {
       return new Intl.NumberFormat("en-NG", {
         style: "currency",
         currency: "NGN",
+        maximumFractionDigits: 0,
       }).format(value);
     },
 
@@ -184,7 +232,6 @@ export default {
     },
 
     deleteProduct(id) {
-      // ✅ Fixed backend endpoint to match Express router.delete("/:id")
       axios
         .delete(`${this.baseURL}products/${id}`)
         .then(() => {
@@ -219,10 +266,12 @@ export default {
   overflow: hidden;
   transition: 0.3s;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  border: 1px solid #eee;
 }
 
 .product-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
 }
 
 .discount-badge {
@@ -232,15 +281,17 @@ export default {
   background: #dc3545;
   color: #fff;
   font-size: 12px;
-  padding: 4px 6px;
+  padding: 3px 6px;
   border-radius: 4px;
   z-index: 10;
+  font-weight: bold;
 }
 
 .image-wrapper {
   width: 100%;
-  height: 180px;
+  height: 170px;
   overflow: hidden;
+  background-color: #f8f9fa;
 }
 
 .image-wrapper img {
@@ -255,20 +306,20 @@ export default {
 
 .title {
   font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 5px;
+  font-weight: 600;
+  color: #222;
 }
 
 .price-box {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 5px;
 }
 
 .price {
-  font-weight: bold;
-  color: #000;
+  font-weight: 700;
+  color: #d9534f;
+  font-size: 15px;
 }
 
 .old-price {
@@ -279,22 +330,11 @@ export default {
 
 .brand {
   font-size: 12px;
-  color: #777;
 }
 
 .actions {
-  margin-top: 10px;
   display: flex;
   gap: 5px;
-}
-
-.btn {
-  flex: 1;
-  font-size: 11px;
-  padding: 5px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
 }
 
 .btn.edit {
@@ -310,5 +350,9 @@ export default {
 .btn.delete {
   background: #dc3545;
   color: #fff;
+}
+
+a {
+  text-decoration: none;
 }
 </style>
