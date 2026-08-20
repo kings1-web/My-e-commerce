@@ -150,6 +150,7 @@ export default {
 
   data() {
     return {
+      token:null,
       products: [],
       loading: true,
       breakpoints: {
@@ -162,6 +163,13 @@ export default {
 
   methods: {
     addToCart(product) {
+      if (!this.token) {
+        this.$swal({
+          text: "Please login to add item",
+          icon: "error",
+        });
+        return;
+      }
       const cartStore = useCartStore();
       if (typeof cartStore.addToCart === "function") {
         cartStore.addToCart(product);
@@ -182,7 +190,7 @@ export default {
       const text = encodeURIComponent(
         `Hello ShoppersFix, I want to order "${product.name}" priced at ${this.formatPrice(product.price)}.`
       );
-      return `https://wa.me/2348000000000?text=${text}`;
+      return `https://wa.me/2349018629904?text=${text}`;
     },
 
     getStarClass(avgRating, starIndex) {
@@ -243,6 +251,7 @@ export default {
 
   mounted() {
     this.featured();
+    this.token = localStorage.getItem("token");
   },
 
   setup() {

@@ -63,7 +63,8 @@ export default {
         .get(`${this.baseURL}products/get/featured/${this.count}`)
         .then((res) => {
           if (Array.isArray(res.data) && res.data.length > 0) {
-            this.products = res.data;
+            // Reverses the array so the latest added items come first
+            this.products = [...res.data].reverse();
           }
         })
         .catch((err) => {

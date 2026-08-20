@@ -1,24 +1,24 @@
 <template>
   <header class="bg-dark text-white sticky-top shadow-sm">
     <!-- 🟢 TOP ANNOUNCEMENT & TRUST BAR -->
-    <div class="bg-primary text-white py-1 px-3 small d-none d-md-block border-bottom border-primary-subtle">
-      <div class="container-fluid d-flex justify-content-between align-items-center fs-7">
-        <div class="d-flex align-items-center gap-3">
-          <span><i class="bi bi-truck me-1"></i> Fast Ondo & Nationwide Delivery</span>
-          <span><i class="bi bi-shield-check me-1"></i> Quality Guaranteed</span>
-          <span><i class="bi bi-cash-stack me-1"></i> Pay on Delivery Available</span>
-        </div>
-        <div class="d-flex align-items-center gap-3">
-          <a href="https://wa.me/2348000000000" target="_blank" class="text-white text-decoration-none fw-semibold">
-            <i class="bi bi-whatsapp me-1 text-success"></i> Order via WhatsApp
-          </a>
-          <span class="text-white-50">|</span>
-          <a href="tel:+2348000000000" class="text-white text-decoration-none">
-            <i class="bi bi-telephone-fill me-1"></i> Call Us
-          </a>
-        </div>
-      </div>
+   <div class="bg-warning text-dark py-1 px-3 small border-bottom border-primary-subtle">
+  <div class="container-fluid d-flex justify-content-between align-items-center fs-7">
+    <div class="d-flex align-items-center gap-3">
+      <span class="d-none d-md-inline"><i class="bi bi-truck me-1"></i> Fast Ondo & Nationwide Delivery</span>
+      <span class="d-none d-md-inline"><i class="bi bi-shield-check me-1"></i> Quality Guaranteed</span>
+      <span><i class="bi bi-cash-stack me-1"></i> Pay on Delivery Available</span>
     </div>
+    <div class="d-none d-md-flex align-items-center gap-3">
+      <a href="https://wa.me/2349018629904" target="_blank" class="text-dark text-decoration-none fw-semibold">
+        <i class="bi bi-whatsapp me-1 text-success"></i> Order via WhatsApp
+      </a>
+      <span class="text-dark-50">|</span>
+      <a href="tel:+2348148674341" class="text-dark text-decoration-none">
+        <i class="bi bi-telephone-fill me-1"></i> Call Us
+      </a>
+    </div>
+  </div>
+</div>
 
     <!-- 🟢 1. MAIN NAVIGATION & SEARCH BAR -->
     <div class="container-fluid px-3 py-2 border-bottom border-secondary">
@@ -132,7 +132,7 @@
     <div class="bg-dark border-bottom border-secondary-subtle py-1 px-3 d-none d-md-block">
       <div class="container-fluid d-flex align-items-center justify-content-start gap-4 small fw-semibold">
         <RouterLink to="/" class="text-light text-decoration-none hover-warning">
-          🛍️ Marketplace Home
+          🛍️ Shoppers Home
         </RouterLink>
         <a href="#feature-product" class="text-white-50 text-decoration-none hover-warning">
           ⚡ Electrical Fittings
@@ -163,7 +163,7 @@
             <ul class="dropdown-menu shadow">
               <li>
                 <RouterLink class="dropdown-item" :to="{ name: 'home' }" @click="closeMenu">
-                  Marketplace Home
+                  Shoppers Home
                 </RouterLink>
               </li>
               <li>

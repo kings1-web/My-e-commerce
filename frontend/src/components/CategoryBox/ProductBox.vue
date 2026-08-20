@@ -99,6 +99,7 @@ export default {
 
   data() {
     return {
+      token:null,
       baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1/",
       fallbackImage: "https://via.placeholder.com/300x200?text=No+Image",
     };
@@ -109,12 +110,19 @@ export default {
       const text = encodeURIComponent(
         `Hello ShoppersFix, I want to order "${this.product.name}" priced at ${this.formatPrice(this.product.price)}.`
       );
-      return `https://wa.me/2348000000000?text=${text}`;
+      return `https://wa.me/2349018629904?text=${text}`;
     }
   },
 
   methods: {
     addToCart() {
+      if (!this.token) {
+        this.$swal({
+          text: "Please login to add item",
+          icon: "error",
+        });
+        return;
+      }
       const cartStore = useCartStore();
       if (typeof cartStore.addToCart === "function") {
         cartStore.addToCart(this.product);
@@ -188,6 +196,9 @@ export default {
         }
       }
     },
+  },
+   mounted() {
+    this.token = localStorage.getItem("token");
   },
 };
 </script>

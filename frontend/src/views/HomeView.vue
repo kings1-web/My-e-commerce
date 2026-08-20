@@ -15,7 +15,7 @@
               🚀 Ondo & Nationwide Delivery
             </span>
             <h1 class="display-6 fw-bold mb-3 text-warning">
-              Quality Plumbing, Electrical & Phone Accessories
+              Quality Plumbing, Electrical & Solar Accessories
             </h1>
             <p class="lead text-light mb-4 fs-6 opacity-90">
               Buy genuine installation accessories, tools, and electronics at
