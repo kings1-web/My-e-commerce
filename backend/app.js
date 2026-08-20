@@ -54,6 +54,7 @@ const io = new Server(server, {
 });
 
 const Message = require("./models/message"); 
+const { Product } = require("./models/product"); // 👈 REQUIRED FOR SITEMAP GENERATION
 const { authJwt } = require("./helpers/jwt");
 const errorHandler = require("./helpers/error-handler");
 
