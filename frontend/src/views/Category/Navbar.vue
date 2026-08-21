@@ -36,7 +36,7 @@
               class="form-control form-control-sm ps-4 pe-5 rounded-pill bg-light text-dark"
               type="search"
               v-model="searchQuery"
-              placeholder="Search plumbing, electrical, phone accessories..."
+              placeholder="Search plumbing, electrical, solar accessories..."
               aria-label="Search"
             />
             <button type="submit" class="btn position-absolute top-50 start-0 translate-middle-y ms-1 p-0 border-0 bg-transparent">
@@ -131,17 +131,17 @@
     <!-- 🟢 QUICK CATEGORY BAR (Drives Fast Browsing) -->
     <div class="bg-dark border-bottom border-secondary-subtle py-1 px-3 d-none d-md-block">
       <div class="container-fluid d-flex align-items-center justify-content-start gap-4 small fw-semibold">
-        <RouterLink to="/" class="text-light text-decoration-none hover-warning">
+        <RouterLink to="/product" class="text-light text-decoration-none hover-warning">
           🛍️ Shoppers Home
         </RouterLink>
-        <a href="#feature-product" class="text-white-50 text-decoration-none hover-warning">
+        <a href="#on-the-way" class="text-white-50 text-decoration-none hover-warning">
           ⚡ Electrical Fittings
         </a>
-        <a href="#feature-product" class="text-white-50 text-decoration-none hover-warning">
+        <a href="#on-the-way" class="text-white-50 text-decoration-none hover-warning">
           🚰 Plumbing Accessories
         </a>
-        <a href="#feature-product" class="text-white-50 text-decoration-none hover-warning">
-          📱 Phone Accessories
+        <a href="#on-the-way" class="text-white-50 text-decoration-none hover-warning">
+          📱 solar Accessories
         </a>
         <RouterLink to="/installers" class="text-warning text-decoration-none ms-auto">
           🔧 Book Handyman Services &rarr;
@@ -162,7 +162,7 @@
             </a>
             <ul class="dropdown-menu shadow">
               <li>
-                <RouterLink class="dropdown-item" :to="{ name: 'home' }" @click="closeMenu">
+                <RouterLink class="dropdown-item" :to="{ name: 'product' }" @click="closeMenu">
                   Shoppers Home
                 </RouterLink>
               </li>
@@ -230,7 +230,7 @@
             </RouterLink>
           </li>
           <li class="nav-item d-sm-none pt-1">
-            <a href="https://wa.me/2348000000000" target="_blank" class="nav-link text-success p-0 fw-semibold">
+            <a href="https://wa.me/2349018629904" target="_blank" class="nav-link text-success p-0 fw-semibold">
               💬 Direct WhatsApp Order
             </a>
           </li>

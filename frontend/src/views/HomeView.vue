@@ -110,6 +110,13 @@
         class="text-white bg-primary pt-2 py-2 px-3 rounded d-flex justify-content-between align-items-center"
       >
         <h3 id="shop-now" class="m-0 fs-4 fw-bold">🛒 Top Products</h3>
+        
+              <RouterLink
+                to="/product"
+                class="btn btn-outline-light fw-bold px-4 py-2"
+              >
+                See All...
+              </RouterLink>
         <span class="small text-white-50">In Stock Now</span>
       </div>
 
@@ -171,7 +178,7 @@ export default {
   data() {
     return {
       categorySize: 4,
-      productSize: 20,
+      productSize: 60,
     };
   },
   methods: {
@@ -181,7 +188,7 @@ export default {
     },
     updateSizes() {
       this.categorySize = Math.min(4, this.categories?.length || 0);
-      this.productSize = Math.min(20, this.products?.length || 0);
+      this.productSize = Math.min(60, this.products?.length || 0);
     },
   },
   computed: {
