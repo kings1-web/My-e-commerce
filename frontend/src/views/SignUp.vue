@@ -102,6 +102,7 @@
                   <option value="Abuja">Abuja</option>
                   <option value="Rivers">Rivers</option>
                   <option value="Oyo">Oyo</option>
+                  <option value="Ondo">Ondo</option>
                   <option value="Anambra">Anambra</option>
                   <option value="Ekiti">Ekiti</option>
                 </select>
@@ -118,15 +119,7 @@
               
               <div class="col-12 mt-3">
                 <div class="form-check">
-                  <input
-                    class="form-check-input"
-                    v-model="d"
-                    type="checkbox"
-                    id="gridCheck"
-                  />
-                  <label class="form-check-label small fw-semibold text-secondary" for="gridCheck">
-                    Request Administrative Authority Privileges (Admin)
-                  </label>
+                  
                 </div>
               </div>
               
