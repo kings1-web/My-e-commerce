@@ -102,6 +102,8 @@
                   <option value="Abuja">Abuja</option>
                   <option value="Rivers">Rivers</option>
                   <option value="Oyo">Oyo</option>
+                  <option value="Anambra">Anambra</option>
+                  <option value="Ekiti">Ekiti</option>
                 </select>
               </div>
               <div class="col-md-2">
@@ -118,7 +120,7 @@
                 <div class="form-check">
                   <input
                     class="form-check-input"
-                    v-model="isAdmin"
+                    v-model="d"
                     type="checkbox"
                     id="gridCheck"
                   />

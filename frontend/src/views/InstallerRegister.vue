@@ -107,7 +107,6 @@ export default {
   name: "InstallerRegistrationView",
   data() {
     return {
-      baseURL: "http://localhost:3000/api/v1/",
       form: {
         name: "",
         email: "",
@@ -129,6 +128,7 @@ export default {
     // Automatically load all valid payment banks as soon as the page opens
     this.fetchNigerianBanks();
   },
+  props: ["baseURL"],
   methods: {
     // 🟢 Fetch live, supported banks directly using Paystack's endpoint via proxy or open library
     async fetchNigerianBanks() {
